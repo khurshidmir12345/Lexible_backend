@@ -103,63 +103,12 @@ class DictionaryService
             return $word;
         }
 
-        $fresh = $this->rejectEnglish($fresh);
-
         if ($fresh) {
             $word->translations = array_merge($word->translations ?? [], $fresh);
             $word->save();
         }
 
         return $word;
-    }
-
-    /**
-     * Drops "translations" that are just English words.
-     *
-     * MyMemory is built from software localisation files, so it happily
-     * answers "make" with "bluetooth". Our own dictionary is the cheapest
-     * detector available: if a supposed Uzbek word is an English headword we
-     * already store, it is not a translation.
-     *
-     * Cyrillic targets need no such check — the script test already rejects
-     * Latin text.
-     *
-     * @param  array<string, list<string>>  $translations
-     * @return array<string, list<string>>
-     */
-    public function rejectEnglish(array $translations): array
-    {
-        $latin = ['uz', 'kaa'];
-        $candidates = collect($translations)
-            ->only($latin)
-            ->flatten()
-            ->map(fn ($t) => Str::lower($t))
-            ->unique();
-
-        if ($candidates->isEmpty()) {
-            return $translations;
-        }
-
-        $english = Word::whereIn('normalized', $candidates)->pluck('normalized')->flip();
-
-        foreach ($latin as $locale) {
-            if (! isset($translations[$locale])) {
-                continue;
-            }
-
-            $kept = array_values(array_filter(
-                $translations[$locale],
-                fn ($t) => ! $english->has(Str::lower($t)),
-            ));
-
-            if ($kept) {
-                $translations[$locale] = $kept;
-            } else {
-                unset($translations[$locale]);
-            }
-        }
-
-        return $translations;
     }
 
     /** Search used by the "add words" screen. */
