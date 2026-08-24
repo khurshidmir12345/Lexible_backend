@@ -2,17 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Contracts\View\View;
+use Illuminate\Http\Response;
 
 class MiniAppController extends Controller
 {
     /**
      * Serves the Mini App shell. No auth here on purpose: the page itself is
      * public, and every API call it makes carries the signed initData.
+     *
+     * The shell must never be cached: it is the only thing that names the
+     * hashed asset files, so a cached copy would keep serving yesterday's
+     * build long after a deploy. The assets themselves are immutable and
+     * cached hard by nginx.
      */
-    public function __invoke(): View
+    public function __invoke(): Response
     {
-        return view('miniapp', [
+        return response()->view('miniapp', [
             'assets' => $this->assets(),
             'config' => [
                 'apiUrl' => url('/api'),
@@ -23,6 +28,9 @@ class MiniAppController extends Controller
                 'mastery' => config('game.mastery'),
                 'duel' => config('game.duel'),
             ],
+        ])->withHeaders([
+            'Cache-Control' => 'no-store, must-revalidate',
+            'Pragma' => 'no-cache',
         ]);
     }
 
