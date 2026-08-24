@@ -35,14 +35,17 @@ class MasteryService
         $isCorrect ? $progress->correct_count++ : $progress->wrong_count++;
         $progress->last_practiced_at = now();
 
-        $wasLearned = $progress->is_learned;
+        // A brand new row has no `is_learned` attribute yet, so it must be read
+        // as false rather than null — otherwise the very first answer looks
+        // like a word that stopped being learned.
+        $wasLearned = (bool) $progress->is_learned;
         $progress->recalculate();
         $progress->save();
 
-        // The player's "words learned" counter only moves on a crossing, in
-        // either direction, so it stays accurate when mastery decays.
+        // The counter only moves when a word crosses the threshold, in either
+        // direction, so it stays accurate as mastery decays.
         if ($progress->is_learned !== $wasLearned) {
-            $session->user->increment('words_learned', $progress->is_learned ? 1 : -1);
+            $this->adjustLearnedCount($session->user_id, $progress->is_learned);
         }
 
         TestAnswer::create([
@@ -59,6 +62,24 @@ class MasteryService
         Word::whereKey($wordId)->increment('usage_count');
 
         return $progress;
+    }
+
+    /**
+     * Moves the player's learned-word counter by one, atomically and never
+     * below zero — the column is unsigned, and MySQL rejects an underflow
+     * outright rather than clamping it.
+     */
+    protected function adjustLearnedCount(int $userId, bool $learned): void
+    {
+        $query = User::whereKey($userId);
+
+        if ($learned) {
+            $query->increment('words_learned');
+
+            return;
+        }
+
+        $query->where('words_learned', '>', 0)->decrement('words_learned');
     }
 
     /**

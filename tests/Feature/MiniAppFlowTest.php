@@ -246,6 +246,37 @@ class MiniAppFlowTest extends TestCase
         $this->assertSame(20, $clean['mastery']['match'], 'a found pair gains one step');
     }
 
+    public function test_the_learned_counter_never_goes_below_zero(): void
+    {
+        // Answering a brand new word wrongly must not push the counter
+        // negative: the column is unsigned and MySQL refuses the update.
+        $this->api('POST', '/api/onboarding', [
+            'native_lang' => 'uz', 'study_days' => ['Du'], 'reminder_at' => '19:00',
+            'cefr_level' => 'A1', 'daily_goal' => 5,
+        ]);
+
+        foreach ([['book', 'kitob'], ['water', 'suv'], ['apple', 'olma'], ['house', 'uy']] as [$en, $uz]) {
+            Word::create(['word' => $en, 'part_of_speech' => 'noun', 'translations' => ['uz' => [$uz]]]);
+        }
+
+        $categoryId = $this->api('GET', '/api/road')->json('nodes.0.id');
+
+        foreach (Word::pluck('id') as $id) {
+            $this->api('POST', "/api/categories/{$categoryId}/words", ['word_id' => $id]);
+        }
+
+        $start = $this->api('POST', "/api/categories/{$categoryId}/tests", ['types' => ['spell']]);
+
+        foreach ($start->json('questions') as $question) {
+            $this->api('POST', "/api/tests/{$start->json('session_id')}/answer", [
+                'question_id' => $question['id'],
+                'answer' => 'wrong',
+            ])->assertSuccessful();
+        }
+
+        $this->assertSame(0, User::where('telegram_id', 555000111)->value('words_learned'));
+    }
+
     public function test_a_wrong_answer_is_graded_as_wrong(): void
     {
         $this->api('POST', '/api/onboarding', [
