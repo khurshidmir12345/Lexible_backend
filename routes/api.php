@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\LearnedWordsController;
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\RoadController;
 use App\Http\Controllers\Api\TestController;
@@ -23,6 +24,7 @@ Route::middleware('miniapp')->group(function () {
     Route::get('/road', RoadController::class);
 
     Route::get('/words/search', WordSearchController::class);
+    Route::get('/learned', LearnedWordsController::class);
 
     Route::get('/categories/{category}', [CategoryController::class, 'show']);
     Route::patch('/categories/{category}', [CategoryController::class, 'rename']);

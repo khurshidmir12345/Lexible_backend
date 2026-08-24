@@ -8,14 +8,23 @@ use App\Models\Category;
 use App\Models\Word;
 use App\Models\WordProgress;
 use App\Services\Game\RoadMapService;
+use App\Services\Game\WordPicker;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class CategoryController extends Controller
 {
-    public function show(Request $request, Category $category): array
+    public function show(Request $request, Category $category, WordPicker $picker): array
     {
         $this->authorizeOwner($request, $category);
+
+        // A stage arrives pre-filled: the player asked for N words a day during
+        // onboarding, so that is what a stage is. They can still add their own.
+        $filled = $picker->fill($category);
+
+        if ($filled > 0) {
+            $category->refresh();
+        }
 
         $words = $category->words()->get();
 
@@ -57,6 +66,7 @@ class CategoryController extends Controller
                 ];
             })->values(),
             'mastery_by_type' => $this->masteryByType($progress),
+            'auto_filled' => $filled,
         ];
     }
 
