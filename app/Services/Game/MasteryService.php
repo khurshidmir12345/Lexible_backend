@@ -48,6 +48,10 @@ class MasteryService
             $this->adjustLearnedCount($session->user_id, $progress->is_learned);
         }
 
+        if ($isCorrect) {
+            User::whereKey($session->user_id)->increment('coins', config('game.coins.per_correct'));
+        }
+
         TestAnswer::create([
             'test_session_id' => $session->id,
             'user_id' => $session->user_id,

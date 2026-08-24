@@ -36,6 +36,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Coins
+    |--------------------------------------------------------------------------
+    | Earned by practising, spent on premium paths. The home screen states the
+    | rates out loud, so they live here rather than being scattered in code.
+    */
+
+    'coins' => [
+        'per_correct' => 1,
+        'per_duel_win' => 10,
+        'per_referral' => 50,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Road map
     |--------------------------------------------------------------------------
     | Nodes are created ahead of the player so the map always looks like a

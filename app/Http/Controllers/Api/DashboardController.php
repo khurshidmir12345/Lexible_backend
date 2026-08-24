@@ -36,9 +36,20 @@ class DashboardController extends Controller
             ->where(fn ($q) => $q->where('host_id', $user->id)->orWhere('guest_id', $user->id))
             ->count();
 
+        // Distinct words answered correctly today — that is what "7 / 10" counts.
+        $today = TestAnswer::where('user_id', $user->id)
+            ->where('is_correct', true)
+            ->whereDate('created_at', today())
+            ->distinct()
+            ->count('word_id');
+
         return [
             'name' => $user->first_name ?: $user->full_name,
             'streak_days' => $user->streak_days,
+            'best_streak' => $user->best_streak,
+            'today' => $today,
+            'daily_goal' => $user->daily_goal,
+            'coins' => $user->coins,
             'words_learned' => $user->words_learned,
             'week' => $week->all(),
             'week_total' => $week->sum(),
