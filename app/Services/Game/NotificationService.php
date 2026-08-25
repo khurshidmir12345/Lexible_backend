@@ -49,6 +49,19 @@ class NotificationService
         return $this->push($user, 'teacher', 'Ustoz soʼrovi tasdiqlandi', "{$teacher} — «{$group}» guruhiga qoʼshildingiz", '👩‍🏫');
     }
 
+    public function competitionStarted(User|int $user, string $group): AppNotification
+    {
+        return $this->push($user, 'competition', 'Musobaqa boshlandi!', "«{$group}» — savollar tayyor", '🏁');
+    }
+
+    public function competitionFinished(User|int $user, int $rank, int $of): AppNotification
+    {
+        $place = $rank > 0 ? "{$rank}-oʼrin" : 'Yakunlandi';
+
+        return $this->push($user, 'competition', "Musobaqa yakunlandi — {$place}",
+            $of > 0 ? "{$of} ishtirokchi orasida" : null, $rank === 1 ? '🥇' : '🏁');
+    }
+
     public function joinRequest(User|int $teacher, string $student, string $group): AppNotification
     {
         return $this->push($teacher, 'teacher', 'Yangi qoʼshilish soʼrovi', "{$student} — «{$group}»", '📨');

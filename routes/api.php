@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\CoinController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DuelController;
 use App\Http\Controllers\Api\GroupJoinController;
+use App\Http\Controllers\Api\CompetitionController;
+use App\Http\Controllers\Api\Teacher\CompetitionController as TeacherCompetitionController;
 use App\Http\Controllers\Api\Teacher\GroupController as TeacherGroupController;
 use App\Http\Controllers\Api\Teacher\PathController;
 use App\Http\Controllers\Api\LearnedWordsController;
@@ -42,6 +44,7 @@ Route::middleware('miniapp')->group(function () {
     Route::post('/categories/{category}/words', [CategoryController::class, 'attach']);
     Route::delete('/categories/{category}/words/{word}', [CategoryController::class, 'detach']);
 
+    Route::get('/categories/{category}/exam', [TestController::class, 'briefing']);
     Route::post('/categories/{category}/tests', [TestController::class, 'start']);
 
     Route::post('/categories/{category}/duels', [DuelController::class, 'store']);
@@ -68,9 +71,22 @@ Route::middleware('miniapp')->group(function () {
         Route::post('/groups', [TeacherGroupController::class, 'store']);
         Route::get('/groups/{group}', [TeacherGroupController::class, 'show']);
         Route::patch('/groups/{group}/path', [TeacherGroupController::class, 'attachPath']);
+        Route::get('/groups/{group}/competitions', [TeacherCompetitionController::class, 'index']);
+        Route::post('/groups/{group}/competitions', [TeacherCompetitionController::class, 'store']);
+        Route::get('/competitions/{competition}', [TeacherCompetitionController::class, 'show']);
+        Route::post('/competitions/{competition}/start', [TeacherCompetitionController::class, 'start']);
+        Route::post('/competitions/{competition}/close', [TeacherCompetitionController::class, 'close']);
+        Route::get('/competitions/{competition}/results', [TeacherCompetitionController::class, 'results']);
+
         Route::post('/members/{member}/approve', [TeacherGroupController::class, 'approve']);
         Route::delete('/members/{member}', [TeacherGroupController::class, 'remove']);
     });
+    Route::get('/competitions/{code}', [CompetitionController::class, 'show']);
+    Route::post('/competitions/{code}/join', [CompetitionController::class, 'join']);
+    Route::post('/competitions/{code}/session', [CompetitionController::class, 'session']);
+    Route::post('/competitions/{code}/finish', [CompetitionController::class, 'finish']);
+    Route::get('/competitions/{code}/results', [CompetitionController::class, 'results']);
+
     Route::post('/tests/{session}/answer', [TestController::class, 'answer']);
     Route::post('/tests/{session}/finish', [TestController::class, 'finish']);
 });

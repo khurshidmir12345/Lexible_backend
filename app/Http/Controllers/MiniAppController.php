@@ -27,6 +27,8 @@ class MiniAppController extends Controller
                 'testTypes' => config('game.test_types'),
                 'mastery' => config('game.mastery'),
                 'duel' => config('game.duel'),
+                'competition' => config('game.competition'),
+                'exam' => config('game.exam'),
             ],
         ])->withHeaders([
             'Cache-Control' => 'no-store, must-revalidate',

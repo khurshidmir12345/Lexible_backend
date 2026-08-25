@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\TestSession;
 use App\Models\Word;
 use App\Models\WordProgress;
+use App\Services\Game\ExamService;
 use App\Services\Game\MasteryService;
 use App\Services\Game\RoadMapService;
 use App\Services\Game\TestBuilder;
@@ -20,32 +21,65 @@ class TestController extends Controller
         protected TestBuilder $builder,
         protected MasteryService $mastery,
         protected RoadMapService $road,
+        protected ExamService $exams,
     ) {}
+
+    /** What an exam will ask, shown before the player commits to it. */
+    public function briefing(Request $request, Category $category): array
+    {
+        $this->authorizeOwner($request, $category);
+        abort_unless($category->type === 'exam', Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        return ['exam' => $this->exams->briefing($category)];
+    }
 
     /** Start a round: pick the exercises, pick the words, generate questions. */
     public function start(Request $request, Category $category): array
     {
         $this->authorizeOwner($request, $category);
 
+        // An exam fixes its own exercises, so the client sends none.
+        $isExam = $category->type === 'exam';
+
         $data = $request->validate([
-            'types' => ['required', 'array', 'min:1'],
+            'types' => [$isExam ? 'nullable' : 'required', 'array', $isExam ? 'min:0' : 'min:1'],
             'types.*' => [Rule::in(config('game.test_types'))],
             'scope' => ['nullable', Rule::in(['all', 'wrong'])],
         ]);
 
         $scope = $data['scope'] ?? 'all';
-        $words = $this->wordsFor($request, $category, $scope);
 
-        abort_if($words->isEmpty(), Response::HTTP_UNPROCESSABLE_ENTITY, 'Bu kategoriyada mashq qilinadigan soʼz yoʼq.');
+        // An exam ignores the requested types and scope: it is a fixed
+        // checkpoint drawn from the stages before it.
+        if ($category->type === 'exam') {
+            $plan = $this->exams->plan($category);
+            $types = $plan['types'];
 
-        $questions = $this->builder->build($category, $data['types'], $words, $request->user()->native_lang);
+            abort_if($plan['slices'] === [], Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Imtihon uchun avvalgi bosqichlarda soʼz yoʼq.');
+
+            $questions = [];
+            foreach ($plan['slices'] as $slice) {
+                $questions = array_merge($questions, $this->builder->build(
+                    $category, [$slice['type']], $slice['words'], $request->user()->native_lang,
+                ));
+            }
+        } else {
+            $words = $this->wordsFor($request, $category, $scope);
+            $types = $data['types'];
+
+            abort_if($words->isEmpty(), Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Bu kategoriyada mashq qilinadigan soʼz yoʼq.');
+
+            $questions = $this->builder->build($category, $types, $words, $request->user()->native_lang);
+        }
 
         abort_if($questions === [], Response::HTTP_UNPROCESSABLE_ENTITY, 'Savol tuzib boʼlmadi — soʼzlarda tarjima yetishmayapti.');
 
         $session = TestSession::create([
             'user_id' => $request->user()->id,
             'category_id' => $category->id,
-            'types' => $data['types'],
+            'types' => $types,
             'scope' => $scope,
             'status' => 'active',
             'questions_count' => count($questions),
@@ -117,16 +151,30 @@ class TestController extends Controller
 
         $category = $session->category;
         $unlocked = null;
+        $accuracy = $session->answered_count > 0
+            ? (int) round($session->correct_count / $session->answered_count * 100)
+            : 0;
+        $examPassed = null;
 
         if ($category) {
             $category->update(['practiced' => true]);
-            $this->road->refreshProgress($category);
 
-            // A node is done once its words are learned well enough.
-            if ($category->fresh()->progress >= config('game.mastery.learned_at')
-                && $category->words_count >= config('game.road.min_words_to_complete')
-                && $category->status !== 'completed') {
-                $unlocked = $this->road->complete($category);
+            if ($category->type === 'exam') {
+                // An exam is judged on this attempt alone, not on mastery.
+                $examPassed = $this->exams->passed($accuracy);
+
+                if ($examPassed && $category->status !== 'completed') {
+                    $category->update(['progress' => $accuracy]);
+                    $unlocked = $this->road->complete($category);
+                }
+            } else {
+                $this->road->refreshProgress($category);
+
+                if ($category->fresh()->progress >= config('game.mastery.learned_at')
+                    && $category->words_count >= config('game.road.min_words_to_complete')
+                    && $category->status !== 'completed') {
+                    $unlocked = $this->road->complete($category);
+                }
             }
         }
 
@@ -134,9 +182,10 @@ class TestController extends Controller
             'correct' => $session->correct_count,
             'wrong' => $session->wrong_count,
             'total' => $session->answered_count,
-            'accuracy' => $session->answered_count > 0
-                ? (int) round($session->correct_count / $session->answered_count * 100)
-                : 0,
+            'accuracy' => $accuracy,
+            'is_exam' => $category?->type === 'exam',
+            'exam_passed' => $examPassed,
+            'pass_mark' => config('game.exam.pass_mark'),
             'streak_days' => $request->user()->fresh()->streak_days,
             'category_progress' => $category?->fresh()->progress,
             'unlocked_position' => $unlocked?->position,

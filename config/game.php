@@ -93,9 +93,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Exams
+    |--------------------------------------------------------------------------
+    | An exam node has no vocabulary of its own: it draws at random from every
+    | stage before it, which is what makes it a checkpoint rather than another
+    | lesson.
+    */
+
+    'exam' => [
+        'questions' => 9,
+        'pass_mark' => 70,
+        'types' => ['uz2en', 'en2uz', 'spell'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Duels
     |--------------------------------------------------------------------------
     */
+
+    'competition' => [
+        'lobby_ttl_minutes' => 60,
+        'types' => ['uz2en', 'en2uz'],
+        'poll_interval_ms' => 2000,
+    ],
 
     'duel' => [
         'lobby_ttl_minutes' => 15,
