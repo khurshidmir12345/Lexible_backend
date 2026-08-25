@@ -219,6 +219,40 @@ class TeachingTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_the_road_separates_personal_and_group_paths(): void
+    {
+        $class = $this->teacherWithClass();
+        $code = Group::find($class['group'])->code;
+
+        $this->as(800, 'Dilnoza')->postJson('/api/onboarding', [
+            'native_lang' => 'uz', 'study_days' => ['Du'], 'reminder_at' => '19:00',
+            'cefr_level' => 'A1', 'daily_goal' => 5,
+        ]);
+
+        // Before joining there is only the player's own path.
+        $this->as(800)->getJson('/api/road')
+            ->assertJsonCount(1, 'paths')
+            ->assertJsonPath('paths.0.kind', 'personal');
+
+        $this->as(800)->postJson('/api/groups/join', ['code' => $code]);
+        $member = GroupMember::where('status', 'pending')->first();
+        $this->as(700)->postJson("/api/teacher/members/{$member->id}/approve");
+
+        $road = $this->as(800)->getJson('/api/road')->assertSuccessful();
+
+        $road->assertJsonCount(2, 'paths')
+            ->assertJsonPath('paths.1.kind', 'group')
+            ->assertJsonPath('paths.1.title', '5-A sinf')
+            ->assertJsonPath('paths.1.teacher', 'Anvar');
+
+        $groupId = (string) $class['group'];
+        $nodes = collect($road->json('nodes'));
+
+        $this->assertTrue($nodes->where('path', 'personal')->isNotEmpty());
+        $this->assertSame(2, $nodes->where('path', $groupId)->count());
+        $this->assertTrue($nodes->where('path', $groupId)->every(fn ($n) => $n['from_group']));
+    }
+
     public function test_the_teacher_dashboard_counts_its_own_students(): void
     {
         $class = $this->teacherWithClass();
