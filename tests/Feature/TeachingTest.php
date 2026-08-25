@@ -83,6 +83,16 @@ class TeachingTest extends TestCase
             ->assertJsonPath('user.role', 'teacher');
     }
 
+    public function test_a_teacher_skips_the_learner_questionnaire(): void
+    {
+        $this->as(700, 'Anvar')->postJson('/api/me/role', ['role' => 'teacher'])
+            ->assertJsonPath('user.onboarded', true);
+
+        // A student still has to answer the questions.
+        $this->as(801, 'Dilnoza')->postJson('/api/me/role', ['role' => 'student'])
+            ->assertJsonPath('user.onboarded', false);
+    }
+
     public function test_students_are_kept_out_of_the_teacher_area(): void
     {
         $this->as(800, 'Dilnoza')->getJson('/api/me');

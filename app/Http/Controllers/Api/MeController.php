@@ -44,6 +44,12 @@ class MeController extends Controller
             'role' => ['required', Rule::in(['student', 'teacher'])],
         ]);
 
+        // Teachers skip the learner questionnaire — language, daily goal and
+        // reminders are for someone studying, not someone teaching.
+        if ($data['role'] === 'teacher') {
+            $data['onboarded'] = true;
+        }
+
         $request->user()->update($data);
 
         return ['user' => $this->present($request->user()->fresh())];
