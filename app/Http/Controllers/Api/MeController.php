@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\AccountService;
 use App\Services\Game\RoadMapService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -71,6 +72,19 @@ class MeController extends Controller
         $request->user()->fill($data)->save();
 
         return ['user' => $this->present($request->user()->fresh())];
+    }
+
+    /** What closing the account would take with it. */
+    public function impact(Request $request, AccountService $accounts): array
+    {
+        return ['impact' => $accounts->impact($request->user())];
+    }
+
+    public function destroy(Request $request, AccountService $accounts): array
+    {
+        $accounts->delete($request->user());
+
+        return ['deleted' => true];
     }
 
     protected function present($user): array

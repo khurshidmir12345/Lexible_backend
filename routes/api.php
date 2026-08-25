@@ -28,6 +28,8 @@ Route::middleware('miniapp')->group(function () {
     Route::post('/onboarding', [MeController::class, 'onboard']);
     Route::patch('/me', [MeController::class, 'update']);
     Route::post('/me/role', [MeController::class, 'chooseRole']);
+    Route::get('/me/impact', [MeController::class, 'impact']);
+    Route::delete('/me', [MeController::class, 'destroy']);
 
     Route::get('/dashboard', DashboardController::class);
     Route::get('/coins', [CoinController::class, 'show']);
