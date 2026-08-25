@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DuelController;
 use App\Http\Controllers\Api\LearnedWordsController;
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\RoadController;
@@ -32,6 +33,12 @@ Route::middleware('miniapp')->group(function () {
     Route::delete('/categories/{category}/words/{word}', [CategoryController::class, 'detach']);
 
     Route::post('/categories/{category}/tests', [TestController::class, 'start']);
+
+    Route::post('/categories/{category}/duels', [DuelController::class, 'store']);
+    Route::get('/duels/{code}', [DuelController::class, 'show']);
+    Route::post('/duels/{code}/join', [DuelController::class, 'join']);
+    Route::post('/duels/{code}/play', [DuelController::class, 'play']);
+    Route::post('/duels/{code}/finish', [DuelController::class, 'finish']);
     Route::post('/tests/{session}/answer', [TestController::class, 'answer']);
     Route::post('/tests/{session}/finish', [TestController::class, 'finish']);
 });
