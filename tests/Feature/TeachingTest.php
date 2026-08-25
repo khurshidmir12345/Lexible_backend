@@ -265,6 +265,10 @@ class TeachingTest extends TestCase
         $this->assertTrue($nodes->where('path', 'personal')->isNotEmpty());
         $this->assertSame(2, $nodes->where('path', $groupId)->count());
         $this->assertTrue($nodes->where('path', $groupId)->every(fn ($n) => $n['from_group']));
+
+        // Group stages are numbered within the teacher's path, not by where
+        // they happen to sit on this particular student's map.
+        $this->assertSame([1, 2], $nodes->where('path', $groupId)->pluck('position')->sort()->values()->all());
     }
 
     public function test_the_teacher_dashboard_counts_its_own_students(): void

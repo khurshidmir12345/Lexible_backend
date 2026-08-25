@@ -19,13 +19,16 @@ class RoadController extends Controller
     public function __invoke(Request $request, RoadMapService $road): array
     {
         $user = $request->user();
-        $nodes = $road->forUser($user)->load('group.teacher');
+        $nodes = $road->forUser($user)->load(['group.teacher', 'pathStage']);
 
         return [
             'paths' => $this->paths($request),
             'nodes' => $nodes->map(fn (Category $c) => [
                 'id' => $c->id,
-                'position' => $c->position,
+                // Inside a teacher's path the stage keeps its own numbering,
+                // so a class talks about "3-bosqich" and everyone means the
+                // same lesson regardless of what else is on their map.
+                'position' => $c->pathStage?->position ?? $c->position,
                 'title' => $c->title,
                 'type' => $c->type,
                 'status' => $c->status,
