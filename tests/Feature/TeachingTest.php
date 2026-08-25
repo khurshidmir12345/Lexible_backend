@@ -33,11 +33,25 @@ class TeachingTest extends TestCase
         }
     }
 
-    protected function as(int $telegramId, string $name = 'User'): self
+    /** @var array<int, string> */
+    protected array $names = [];
+
+    /**
+     * Signs initData for a player. The profile is refreshed from initData on
+     * every request, so the name has to stay the same across calls — it is
+     * remembered here rather than repeated at each call site.
+     */
+    protected function as(int $telegramId, ?string $name = null): self
     {
+        $this->names[$telegramId] = $name ?? $this->names[$telegramId] ?? 'User';
+
         $params = [
             'auth_date' => (string) time(),
-            'user' => json_encode(['id' => $telegramId, 'first_name' => $name, 'language_code' => 'uz']),
+            'user' => json_encode([
+                'id' => $telegramId,
+                'first_name' => $this->names[$telegramId],
+                'language_code' => 'uz',
+            ]),
         ];
 
         ksort($params);
