@@ -14,7 +14,10 @@ use App\Models\WordProgress;
  */
 class MasteryService
 {
-    public function __construct(protected CoinService $coins) {}
+    public function __construct(
+        protected CoinService $coins,
+        protected NotificationService $notifications,
+    ) {}
 
     public function record(TestSession $session, array $question, mixed $given, bool $isCorrect, int $responseMs): WordProgress
     {
@@ -111,5 +114,10 @@ class MasteryService
         $user->best_streak = max($user->best_streak, $user->streak_days);
         $user->last_practiced_date = $today;
         $user->save();
+
+        // Only round milestones are worth interrupting someone for.
+        if (in_array($user->streak_days, [3, 7, 14, 30, 60, 100], true)) {
+            $this->notifications->streak($user->id, $user->streak_days);
+        }
     }
 }

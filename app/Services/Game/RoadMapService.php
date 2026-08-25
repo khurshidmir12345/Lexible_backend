@@ -16,6 +16,8 @@ use Illuminate\Support\Collection;
  */
 class RoadMapService
 {
+    public function __construct(protected NotificationService $notifications) {}
+
     public function forUser(User $user): Collection
     {
         if ($user->categories()->count() === 0) {
@@ -67,6 +69,7 @@ class RoadMapService
 
         if ($next && $next->status === 'locked') {
             $next->update(['status' => 'in_progress']);
+            $this->notifications->stageUnlocked($category->user_id, $next->title ?? "{$next->position}-bosqich");
         }
 
         $this->extend($category->user);

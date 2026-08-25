@@ -18,6 +18,8 @@ use Illuminate\Support\Str;
  */
 class GroupService
 {
+    public function __construct(protected \App\Services\Game\NotificationService $notifications) {}
+
     /** Codes are read out in class, so they are built from clear words. */
     protected const WORDS = [
         'KITOB', 'QUYOSH', 'DARYO', 'BAHOR', 'YULDUZ', 'CHINOR',
@@ -55,6 +57,8 @@ class GroupService
         if (! $membership->exists || $membership->status === 'removed') {
             $membership->status = 'pending';
             $membership->save();
+
+            $this->notifications->joinRequest($group->teacher_id, $student->full_name, $group->title);
         }
 
         return $membership->fresh();
@@ -66,6 +70,13 @@ class GroupService
         $membership->group->refreshMembersCount();
 
         $this->materialise($membership->group, $membership->user);
+
+        $membership->group->loadMissing('teacher');
+        $this->notifications->joinedGroup(
+            $membership->user_id,
+            $membership->group->title,
+            $membership->group->teacher?->full_name ?? 'Ustoz',
+        );
 
         return $membership->fresh();
     }

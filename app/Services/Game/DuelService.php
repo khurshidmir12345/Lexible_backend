@@ -22,6 +22,7 @@ class DuelService
     public function __construct(
         protected TestBuilder $builder,
         protected CoinService $coins,
+        protected NotificationService $notifications,
     ) {}
 
     public function create(User $host, Category $category, array $types): Duel
@@ -116,6 +117,20 @@ class DuelService
 
             if ($winner) {
                 $this->coins->award($winner, config('game.coins.per_duel_win'));
+            }
+
+            $duel->loadMissing(['host', 'guest']);
+
+            $this->notifications->duelFinished(
+                $duel->host_id, $winner === $duel->host_id,
+                $duel->guest?->first_name ?? 'Doʼst', $duel->host_score, $duel->guest_score,
+            );
+
+            if ($duel->guest_id) {
+                $this->notifications->duelFinished(
+                    $duel->guest_id, $winner === $duel->guest_id,
+                    $duel->host?->first_name ?? 'Doʼst', $duel->guest_score, $duel->host_score,
+                );
             }
         }
 
