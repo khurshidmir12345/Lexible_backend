@@ -37,6 +37,18 @@ class MeController extends Controller
         return ['user' => $this->present($user->fresh())];
     }
 
+    /** UT-00: the player says whether they are a student or a teacher. */
+    public function chooseRole(Request $request): array
+    {
+        $data = $request->validate([
+            'role' => ['required', Rule::in(['student', 'teacher'])],
+        ]);
+
+        $request->user()->update($data);
+
+        return ['user' => $this->present($request->user()->fresh())];
+    }
+
     /** Profile screen: language, study days, reminder time, dark mode. */
     public function update(Request $request): array
     {
@@ -65,6 +77,7 @@ class MeController extends Controller
             'initial' => $user->initial,
             'photo' => $user->photo_url,
             'onboarded' => $user->onboarded,
+            'role' => $user->role,
             'native_lang' => $user->native_lang,
             'study_days' => $user->study_days ?? [],
             'reminder_at' => $user->reminder_at ? substr((string) $user->reminder_at, 0, 5) : null,

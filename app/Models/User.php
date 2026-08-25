@@ -33,6 +33,26 @@ class User extends Model
         ];
     }
 
+    public function paths(): HasMany
+    {
+        return $this->hasMany(Path::class, 'teacher_id');
+    }
+
+    public function groups(): HasMany
+    {
+        return $this->hasMany(Group::class, 'teacher_id');
+    }
+
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(GroupMember::class);
+    }
+
+    public function isTeacher(): bool
+    {
+        return $this->role === 'teacher';
+    }
+
     public function categories(): HasMany
     {
         return $this->hasMany(Category::class)->orderBy('position');

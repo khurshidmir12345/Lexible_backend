@@ -24,6 +24,22 @@ class Category extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(Group::class);
+    }
+
+    public function pathStage(): BelongsTo
+    {
+        return $this->belongsTo(PathStage::class);
+    }
+
+    /** A stage handed down by a teacher; the player cannot edit its words. */
+    public function isFromGroup(): bool
+    {
+        return $this->group_id !== null;
+    }
+
     public function words(): BelongsToMany
     {
         return $this->belongsToMany(Word::class)
