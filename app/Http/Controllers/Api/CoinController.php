@@ -15,6 +15,24 @@ class CoinController extends Controller
         return $coins->summary($request->user());
     }
 
+    /**
+     * Carbon has no reliable Uzbek locale here — asking for a translated month
+     * came back in Russian — so the twelve names are spelled out.
+     */
+    protected function uzbekDate(?\DateTimeInterface $date): ?string
+    {
+        if (! $date) {
+            return null;
+        }
+
+        $months = [
+            'yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun',
+            'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr',
+        ];
+
+        return (int) $date->format('j').'-'.$months[(int) $date->format('n') - 1];
+    }
+
     /** The streak sheet: this week's days, records and totals. */
     public function streak(Request $request): array
     {
@@ -36,7 +54,7 @@ class CoinController extends Controller
             'streak_days' => $user->streak_days,
             'best_streak' => $user->best_streak,
             'active_days' => (int) $activeDays,
-            'since' => $user->created_at?->translatedFormat('j F'),
+            'since' => $this->uzbekDate($user->created_at),
             'week' => collect(range(0, 6))
                 ->map(fn (int $offset) => $days->has($weekStart->copy()->addDays($offset)->toDateString()))
                 ->all(),
