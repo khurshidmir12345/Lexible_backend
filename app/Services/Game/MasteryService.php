@@ -14,6 +14,8 @@ use App\Models\WordProgress;
  */
 class MasteryService
 {
+    public function __construct(protected CoinService $coins) {}
+
     public function record(TestSession $session, array $question, mixed $given, bool $isCorrect, int $responseMs): WordProgress
     {
         $wordId = $question['word_id'] ?? null;
@@ -48,8 +50,13 @@ class MasteryService
             $this->adjustLearnedCount($session->user_id, $progress->is_learned);
         }
 
+        // A word answered right in all six exercises is properly learned.
+        if ($progress->overall >= config('game.mastery.max') && $progress->wasChanged('overall')) {
+            $this->coins->award($session->user_id, config('game.coins.per_word_mastered'));
+        }
+
         if ($isCorrect) {
-            User::whereKey($session->user_id)->increment('coins', config('game.coins.per_correct'));
+            $this->coins->award($session->user_id, config('game.coins.per_correct'));
         }
 
         TestAnswer::create([

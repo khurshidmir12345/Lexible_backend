@@ -29,6 +29,7 @@ class User extends Model
             'is_banned' => 'boolean',
             'last_practiced_date' => 'date',
             'last_seen_at' => 'datetime',
+            'premium_until' => 'datetime',
         ];
     }
 
@@ -80,6 +81,11 @@ class User extends Model
     public function getDisplayNameAttribute(): string
     {
         return $this->username ? '@'.$this->username : $this->full_name;
+    }
+
+    public function isPremium(): bool
+    {
+        return (bool) $this->premium_until?->isFuture();
     }
 
     public function getInitialAttribute(): string

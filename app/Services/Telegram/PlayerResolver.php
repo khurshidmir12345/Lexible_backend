@@ -52,6 +52,8 @@ class PlayerResolver
 
         if ($isNew && $user->referred_by) {
             User::whereKey($user->referred_by)->increment('referrals_count');
+            app(\App\Services\Game\CoinService::class)
+                ->award($user->referred_by, config('game.coins.per_referral'));
         }
 
         return $user;

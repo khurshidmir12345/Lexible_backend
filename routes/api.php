@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CoinController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DuelController;
 use App\Http\Controllers\Api\LearnedWordsController;
@@ -22,6 +23,8 @@ Route::middleware('miniapp')->group(function () {
     Route::patch('/me', [MeController::class, 'update']);
 
     Route::get('/dashboard', DashboardController::class);
+    Route::get('/coins', [CoinController::class, 'show']);
+    Route::get('/streak', [CoinController::class, 'streak']);
     Route::get('/road', RoadController::class);
 
     Route::get('/words/search', WordSearchController::class);

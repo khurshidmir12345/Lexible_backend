@@ -19,7 +19,10 @@ use Illuminate\Support\Str;
  */
 class DuelService
 {
-    public function __construct(protected TestBuilder $builder) {}
+    public function __construct(
+        protected TestBuilder $builder,
+        protected CoinService $coins,
+    ) {}
 
     public function create(User $host, Category $category, array $types): Duel
     {
@@ -112,7 +115,7 @@ class DuelService
             ]);
 
             if ($winner) {
-                User::whereKey($winner)->increment('coins', config('game.coins.per_duel_win'));
+                $this->coins->award($winner, config('game.coins.per_duel_win'));
             }
         }
 

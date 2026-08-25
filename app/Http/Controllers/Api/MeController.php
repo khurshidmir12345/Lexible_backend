@@ -75,6 +75,9 @@ class MeController extends Controller
             'streak_days' => $user->streak_days,
             'best_streak' => $user->best_streak,
             'words_learned' => $user->words_learned,
+            'coins' => $user->coins,
+            'is_premium' => $user->isPremium(),
+            'premium_until' => $user->premium_until?->toDateString(),
         ];
     }
 }

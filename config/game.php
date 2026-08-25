@@ -44,8 +44,23 @@ return [
 
     'coins' => [
         'per_correct' => 1,
+        'per_word_mastered' => 5,
         'per_duel_win' => 10,
+        'per_group_duel_win' => 20,
         'per_referral' => 50,
+
+        // Coins turn into Premium on their own; each tier is reached once and
+        // adds its days. Measured against lifetime earnings, never the balance.
+        'premium_tiers' => [
+            ['coins' => 300, 'days' => 3],
+            ['coins' => 500, 'days' => 3],
+            ['coins' => 1000, 'days' => 7],
+        ],
+    ],
+
+    'premium' => [
+        'price_label' => '19 000 soʼm',
+        'period_label' => '/ oy',
     ],
 
     /*
