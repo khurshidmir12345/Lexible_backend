@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\WordResource;
 use App\Models\Category;
 use App\Models\Word;
 use App\Models\WordProgress;
@@ -18,9 +17,13 @@ class CategoryController extends Controller
     {
         $this->authorizeOwner($request, $category);
 
+        $category->loadMissing(['group.teacher', 'pathStage']);
+
         // A stage arrives pre-filled: the player asked for N words a day during
         // onboarding, so that is what a stage is. They can still add their own.
-        $filled = $picker->fill($category);
+        // A teacher's stage is never touched — an empty one is a lesson that
+        // has not been written yet, not an invitation to pick random words.
+        $filled = $category->isFromGroup() ? 0 : $picker->fill($category);
 
         if ($filled > 0) {
             $category->refresh();
@@ -39,12 +42,24 @@ class CategoryController extends Controller
         return [
             'category' => [
                 'id' => $category->id,
-                'position' => $category->position,
+                // Inside a teacher's path the stage keeps the class numbering,
+                // so "3-bosqich" means the same lesson to everyone.
+                'position' => $category->pathStage?->position ?? $category->position,
                 'title' => $category->title,
                 'type' => $category->type,
                 'status' => $category->status,
                 'progress' => $category->progress,
                 'practiced' => $category->practiced,
+                // The vocabulary belongs to whoever wrote it. A teacher's
+                // stage is read-only here; the app hides its edit controls.
+                'from_group' => $category->isFromGroup(),
+                'editable' => ! $category->isFromGroup(),
+                'group' => $category->group ? [
+                    'id' => $category->group->id,
+                    'title' => $category->group->title,
+                    'badge' => $category->group->badge,
+                    'teacher' => $category->group->teacher?->full_name,
+                ] : null,
             ],
             'words' => $words->map(function (Word $word) use ($progress, $locale) {
                 $p = $progress[$word->id] ?? null;
@@ -73,7 +88,7 @@ class CategoryController extends Controller
     /** A node has no title until the player names it on first open. */
     public function rename(Request $request, Category $category): array
     {
-        $this->authorizeOwner($request, $category);
+        $this->authorizeEditable($request, $category);
 
         $data = $request->validate([
             'title' => ['required', 'string', 'min:2', 'max:60'],
@@ -87,7 +102,7 @@ class CategoryController extends Controller
     /** Toggling a word in the "add words" screen. */
     public function attach(Request $request, Category $category, RoadMapService $road): array
     {
-        $this->authorizeOwner($request, $category);
+        $this->authorizeEditable($request, $category);
 
         $data = $request->validate([
             'word_id' => ['required', 'integer', 'exists:words,id'],
@@ -107,7 +122,7 @@ class CategoryController extends Controller
 
     public function detach(Request $request, Category $category, Word $word, RoadMapService $road): array
     {
-        $this->authorizeOwner($request, $category);
+        $this->authorizeEditable($request, $category);
 
         $category->words()->detach($word->id);
         $road->refreshProgress($category);
@@ -130,5 +145,21 @@ class CategoryController extends Controller
     protected function authorizeOwner(Request $request, Category $category): void
     {
         abort_unless($category->user_id === $request->user()->id, Response::HTTP_FORBIDDEN);
+    }
+
+    /**
+     * The player owns their copy of a teacher's stage, but not its contents —
+     * the class has to be studying the same words for the teacher's results
+     * screen to mean anything.
+     */
+    protected function authorizeEditable(Request $request, Category $category): void
+    {
+        $this->authorizeOwner($request, $category);
+
+        abort_if(
+            $category->isFromGroup(),
+            Response::HTTP_FORBIDDEN,
+            'Bu bosqich ustozingiz tuzgan — lugʼatini oʼzgartirib boʼlmaydi.',
+        );
     }
 }

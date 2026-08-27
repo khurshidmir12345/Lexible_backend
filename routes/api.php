@@ -59,6 +59,7 @@ Route::middleware('miniapp')->group(function () {
     // Groups a student belongs to
     Route::post('/groups/join', [GroupJoinController::class, 'join']);
     Route::get('/groups/mine', [GroupJoinController::class, 'mine']);
+    Route::delete('/groups/{group}/leave', [GroupJoinController::class, 'leave']);
 
     // Everything below is the teacher side of the app
     Route::prefix('teacher')->group(function () {

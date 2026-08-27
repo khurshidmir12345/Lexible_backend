@@ -21,8 +21,14 @@ class RoadController extends Controller
         $user = $request->user();
         $nodes = $road->forUser($user)->load(['group.teacher', 'pathStage']);
 
+        $paths = $this->paths($request);
+
+        // OQ-03: on a "student pays" class the stages stay visible but shut
+        // until the month is paid for, so the player sees what is waiting.
+        $unpaid = collect($paths)->where('payment_required', true)->pluck('id')->all();
+
         return [
-            'paths' => $this->paths($request),
+            'paths' => $paths,
             'nodes' => $nodes->map(fn (Category $c) => [
                 'id' => $c->id,
                 // Inside a teacher's path the stage keeps its own numbering,
@@ -31,7 +37,8 @@ class RoadController extends Controller
                 'position' => $c->pathStage?->position ?? $c->position,
                 'title' => $c->title,
                 'type' => $c->type,
-                'status' => $c->status,
+                'status' => in_array((string) $c->group_id, $unpaid, true) ? 'locked' : $c->status,
+                'lock_reason' => in_array((string) $c->group_id, $unpaid, true) ? 'payment' : null,
                 'progress' => $c->progress,
                 'words_count' => $c->words_count,
                 'date' => $c->unlock_date?->toDateString(),
@@ -62,14 +69,24 @@ class RoadController extends Controller
 
         foreach ($memberships as $membership) {
             $group = $membership->group;
+            $teacher = $group->teacher;
+
+            // Two ways a class is funded. On the teacher's own plan the
+            // student never sees a price; on the other the path stays shut
+            // until their month is paid.
+            $studentPays = $teacher?->billing_mode === 'student';
+            $paid = $membership->paid_until && $membership->paid_until->isFuture();
 
             $paths[] = [
                 'id' => (string) $group->id,
                 'title' => $group->title,
                 'kind' => 'group',
                 'subtitle' => $group->subtitle,
-                'teacher' => $group->teacher?->full_name,
+                'teacher' => $teacher?->full_name,
                 'badge' => $group->badge,
+                'payment_required' => $studentPays && ! $paid,
+                'price' => $studentPays ? (int) config('game.teaching.student_price') : null,
+                'paid_until' => $membership->paid_until?->toDateString(),
             ];
         }
 

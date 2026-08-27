@@ -74,7 +74,17 @@ class TestController extends Controller
             $questions = $this->builder->build($category, $types, $words, $request->user()->native_lang);
         }
 
-        abort_if($questions === [], Response::HTTP_UNPROCESSABLE_ENTITY, 'Savol tuzib boʼlmadi — soʼzlarda tarjima yetishmayapti.');
+        // Picture questions are dropped for words nothing can illustrate, so
+        // asking for only that type can legitimately come back empty. Saying
+        // "translations are missing" would send the player looking in the
+        // wrong place.
+        abort_if(
+            $questions === [],
+            Response::HTTP_UNPROCESSABLE_ENTITY,
+            $types === ['image']
+                ? 'Bu soʼzlar uchun rasm yoʼq — boshqa mashq turini tanlang.'
+                : 'Savol tuzib boʼlmadi — soʼzlarda tarjima yetishmayapti.',
+        );
 
         $session = TestSession::create([
             'user_id' => $request->user()->id,

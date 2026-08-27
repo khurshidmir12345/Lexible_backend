@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\AccountService;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use App\Services\Game\RoadMapService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class MeController extends Controller
 {
+    public function __construct(protected GroupJoinController $joins) {}
+
     /** Everything the app needs to decide between onboarding and the map. */
     public function show(Request $request): array
     {
@@ -30,12 +33,32 @@ class MeController extends Controller
         ]);
 
         $user = $request->user();
-        $user->fill($data + ['onboarded' => true])->save();
+        $user->fill($data + ['onboarded' => true, 'role_chosen' => true])->save();
 
         // The map is spaced by the daily goal, so it is built after onboarding.
         $road->forUser($user);
 
-        return ['user' => $this->present($user->fresh())];
+        // ON-09 asks for a teacher ID. Storing the string and doing nothing
+        // with it is why students arrived with no class attached; the code is
+        // now actually acted on, and a bad one is reported rather than eaten.
+        $joined = null;
+        $problem = null;
+
+        if (filled($data['teacher_code'] ?? null)) {
+            try {
+                $joined = $this->joins->join(
+                    $request->merge(['code' => $data['teacher_code']]),
+                );
+            } catch (HttpExceptionInterface $e) {
+                $problem = $e->getMessage();
+            }
+        }
+
+        return [
+            'user' => $this->present($user->fresh()),
+            'teacher_request' => $joined,
+            'teacher_problem' => $problem,
+        ];
     }
 
     /**

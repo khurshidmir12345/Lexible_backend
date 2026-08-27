@@ -11,7 +11,7 @@ class GroupMember extends Model
 
     protected function casts(): array
     {
-        return ['joined_at' => 'datetime'];
+        return ['joined_at' => 'datetime', 'paid_until' => 'datetime'];
     }
 
     public function group(): BelongsTo

@@ -71,11 +71,10 @@ class TestBuilder
                 'length' => mb_strlen($word->word),
             ],
 
-            'image' => $base + [
-                'prompt' => $word->word,
-                'options' => $this->imageOptions($word, $pool, $locale),
-                'answer' => $word->id,
-            ],
+            // A picture question is only askable when the word itself has a
+            // picture and enough pictured decoys exist to fill the grid.
+            // Anything less renders as blank tiles the player cannot answer.
+            'image' => $this->imageQuestion($base, $word, $pool, $locale),
 
             default => null,
         };
@@ -96,10 +95,31 @@ class TestBuilder
     }
 
     /** Picture questions need an image per option, so decoys must have one. */
-    protected function imageOptions(Word $word, Collection $pool, string $locale): array
+    protected function imageQuestion(array $base, Word $word, Collection $pool, string $locale): ?array
     {
-        return $this->distractors($word, $pool, $locale)
-            ->filter(fn (Word $w) => filled($w->emoji) || filled($w->icon_path))
+        if (! $this->pictured($word)) {
+            return null;
+        }
+
+        $needed = (int) config('game.session.choice_options');
+
+        // Same-category decoys first, then anywhere in the dictionary — a
+        // stage of freshly typed words has no pictured neighbours at all.
+        $decoys = $this->distractors($word, $pool, $locale)
+            ->filter(fn (Word $w) => $this->pictured($w));
+
+        if ($decoys->count() < $needed - 1) {
+            $decoys = $decoys->concat($this->picturedElsewhere(
+                $word, $pool->pluck('id')->merge($decoys->pluck('id')), $locale,
+                $needed - 1 - $decoys->count(),
+            ));
+        }
+
+        if ($decoys->count() < $needed - 1) {
+            return null;
+        }
+
+        $options = $decoys->take($needed - 1)
             ->push($word)
             ->unique('id')
             ->shuffle()
@@ -109,8 +129,31 @@ class TestBuilder
                 'icon' => $w->icon_path,
                 'label' => $w->translation($locale),
             ])
-            ->values()
-            ->all();
+            ->values();
+
+        return $options->count() < $needed
+            ? null
+            : $base + ['prompt' => $word->word, 'options' => $options->all(), 'answer' => $word->id];
+    }
+
+    protected function pictured(Word $word): bool
+    {
+        return filled($word->emoji) || filled($word->icon_path);
+    }
+
+    /** @return Collection<int, Word> */
+    protected function picturedElsewhere(Word $word, Collection $exclude, string $locale, int $count): Collection
+    {
+        if ($count < 1) {
+            return collect();
+        }
+
+        return Word::usable($locale)
+            ->whereNotIn('id', $exclude->push($word->id)->unique())
+            ->where(fn ($q) => $q->whereNotNull('emoji')->orWhereNotNull('icon_path'))
+            ->inRandomOrder()
+            ->limit($count)
+            ->get();
     }
 
     /**

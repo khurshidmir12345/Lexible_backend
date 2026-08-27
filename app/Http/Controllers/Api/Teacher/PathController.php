@@ -8,6 +8,7 @@ use App\Models\Path;
 use App\Models\PathStage;
 use App\Models\Word;
 use App\Services\Dictionary\DictionaryService;
+use App\Services\Dictionary\EmojiMatcher;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -120,7 +121,12 @@ class PathController extends Controller
      * shared dictionary is reused; anything new is created from what they
      * typed, so a class is never blocked by a gap in the dictionary.
      */
-    public function updateStage(Request $request, PathStage $stage, DictionaryService $dictionary): array
+    public function updateStage(
+        Request $request,
+        PathStage $stage,
+        DictionaryService $dictionary,
+        EmojiMatcher $emojis,
+    ): array
     {
         $this->authorizeOwner($request, $stage->path);
 
@@ -146,6 +152,15 @@ class PathController extends Controller
                     'source' => 'manual',
                     'needs_review' => true,
                 ]);
+            }
+
+            // Without a picture the word can never be asked as a picture
+            // question, so a hand-typed lesson would quietly lose one of the
+            // six exercises.
+            if (blank($word->emoji) && blank($word->icon_path)) {
+                if ($emoji = $emojis->match($word->word, $word->part_of_speech)) {
+                    $word->update(['emoji' => $emoji]);
+                }
             }
 
             // The teacher's wording wins for their own class.
