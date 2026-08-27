@@ -146,15 +146,27 @@ class GroupService
     /** Ranking inside a group, by how well the shared stages are mastered. */
     public function leaderboard(Group $group, ?int $stageId = null): array
     {
-        return $group->students()->get()
-            ->map(function (User $student) use ($group, $stageId) {
-                $categories = Category::where('user_id', $student->id)
-                    ->where('group_id', $group->id)
-                    ->when($stageId, fn ($q) => $q->where('path_stage_id', $stageId))
-                    ->get();
+        $students = $group->students()->get();
+
+        // One query for the whole class instead of one per student, and it
+        // also carries the membership id the teacher needs to remove someone.
+        $byStudent = Category::whereIn('user_id', $students->pluck('id'))
+            ->where('group_id', $group->id)
+            ->when($stageId, fn ($q) => $q->where('path_stage_id', $stageId))
+            ->get()
+            ->groupBy('user_id');
+
+        $memberIds = GroupMember::where('group_id', $group->id)
+            ->whereIn('user_id', $students->pluck('id'))
+            ->pluck('id', 'user_id');
+
+        return $students
+            ->map(function (User $student) use ($byStudent, $memberIds) {
+                $categories = $byStudent->get($student->id) ?? collect();
 
                 return [
                     'id' => $student->id,
+                    'member_id' => $memberIds[$student->id] ?? null,
                     'name' => $student->full_name,
                     'initial' => $student->initial,
                     'photo' => $student->photo_url,

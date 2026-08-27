@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\CompetitionController;
 use App\Http\Controllers\Api\Teacher\CompetitionController as TeacherCompetitionController;
 use App\Http\Controllers\Api\Teacher\GroupController as TeacherGroupController;
 use App\Http\Controllers\Api\Teacher\PathController;
+use App\Http\Controllers\Api\Teacher\PlanController;
 use App\Http\Controllers\Api\LearnedWordsController;
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\NotificationController;
@@ -62,19 +63,37 @@ Route::middleware('miniapp')->group(function () {
     // Everything below is the teacher side of the app
     Route::prefix('teacher')->group(function () {
         Route::get('/dashboard', [TeacherGroupController::class, 'dashboard']);
+        Route::get('/profile', [TeacherGroupController::class, 'profile']);
+
+        Route::get('/plan', [PlanController::class, 'show']);
+        Route::post('/plan', [PlanController::class, 'choose']);
+        Route::post('/plan/mode', [PlanController::class, 'billingMode']);
+        Route::post('/plan/remind', [PlanController::class, 'remind']);
 
         Route::get('/paths', [PathController::class, 'index']);
         Route::post('/paths', [PathController::class, 'store']);
+        Route::patch('/paths/{path}', [PathController::class, 'update']);
+        Route::delete('/paths/{path}', [PathController::class, 'destroy']);
         Route::post('/paths/{path}/stages', [PathController::class, 'addStage']);
         Route::get('/stages/{stage}', [PathController::class, 'showStage']);
         Route::patch('/stages/{stage}', [PathController::class, 'updateStage']);
+        Route::delete('/stages/{stage}', [PathController::class, 'destroyStage']);
 
         Route::get('/groups', [TeacherGroupController::class, 'index']);
         Route::post('/groups', [TeacherGroupController::class, 'store']);
         Route::get('/groups/{group}', [TeacherGroupController::class, 'show']);
+        Route::patch('/groups/{group}', [TeacherGroupController::class, 'update']);
+        Route::delete('/groups/{group}', [TeacherGroupController::class, 'destroy']);
         Route::patch('/groups/{group}/path', [TeacherGroupController::class, 'attachPath']);
+        Route::get('/groups/{group}/road', [TeacherGroupController::class, 'road']);
+        Route::get('/groups/{group}/stages/{stage}/results', [TeacherGroupController::class, 'stageResults']);
+        Route::get('/groups/{group}/candidates', [TeacherGroupController::class, 'searchStudents']);
+        Route::post('/groups/{group}/members', [TeacherGroupController::class, 'addStudent']);
+
+        Route::get('/competitions', [TeacherCompetitionController::class, 'mine']);
         Route::get('/groups/{group}/competitions', [TeacherCompetitionController::class, 'index']);
         Route::post('/groups/{group}/competitions', [TeacherCompetitionController::class, 'store']);
+        Route::post('/stages/{stage}/competitions', [TeacherCompetitionController::class, 'open']);
         Route::get('/competitions/{competition}', [TeacherCompetitionController::class, 'show']);
         Route::post('/competitions/{competition}/start', [TeacherCompetitionController::class, 'start']);
         Route::post('/competitions/{competition}/close', [TeacherCompetitionController::class, 'close']);

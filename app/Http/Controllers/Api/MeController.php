@@ -38,12 +38,18 @@ class MeController extends Controller
         return ['user' => $this->present($user->fresh())];
     }
 
-    /** UT-00: the player says whether they are a student or a teacher. */
-    public function chooseRole(Request $request): array
+    /**
+     * UT-00: the player says whether they are a student or a teacher — and
+     * the profile screens on both sides let them change their mind later.
+     */
+    public function chooseRole(Request $request, RoadMapService $road): array
     {
         $data = $request->validate([
             'role' => ['required', Rule::in(['student', 'teacher'])],
         ]);
+
+        $user = $request->user();
+        $data['role_chosen'] = true;
 
         // Teachers skip the learner questionnaire — language, daily goal and
         // reminders are for someone studying, not someone teaching.
@@ -51,9 +57,20 @@ class MeController extends Controller
             $data['onboarded'] = true;
         }
 
-        $request->user()->update($data);
+        $user->update($data);
+        $user = $user->fresh();
 
-        return ['user' => $this->present($request->user()->fresh())];
+        if ($data['role'] === 'teacher') {
+            // The ID a class joins by is minted the first time they teach.
+            $user->teacherRef();
+        } elseif ($user->onboarded && $user->categories()->doesntExist()) {
+            // A teacher stepping over to the student side has answered no
+            // questionnaire, so there is no map yet — build one now rather
+            // than dropping them onto an empty road.
+            $road->forUser($user);
+        }
+
+        return ['user' => $this->present($user->fresh())];
     }
 
     /** Profile screen: language, study days, reminder time, dark mode. */
@@ -98,6 +115,11 @@ class MeController extends Controller
             'photo' => $user->photo_url,
             'onboarded' => $user->onboarded,
             'role' => $user->role,
+            'role_chosen' => (bool) $user->role_chosen,
+            // Lets the student profile offer the way back to the teacher side
+            // instead of the role choice being a one-way door.
+            'has_teaching' => $user->hasTeaching(),
+            'teacher_ref' => $user->teacher_ref,
             'native_lang' => $user->native_lang,
             'study_days' => $user->study_days ?? [],
             'reminder_at' => $user->reminder_at ? substr((string) $user->reminder_at, 0, 5) : null,

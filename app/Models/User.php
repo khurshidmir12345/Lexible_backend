@@ -30,6 +30,7 @@ class User extends Model
             'last_practiced_date' => 'date',
             'last_seen_at' => 'datetime',
             'premium_until' => 'datetime',
+            'plan_until' => 'datetime',
         ];
     }
 
@@ -51,6 +52,31 @@ class User extends Model
     public function isTeacher(): bool
     {
         return $this->role === 'teacher';
+    }
+
+    /** Anyone who has ever built a path or a group can go back to teaching. */
+    public function hasTeaching(): bool
+    {
+        return $this->paths()->exists() || $this->groups()->exists();
+    }
+
+    /**
+     * The ID a teacher reads out in class — UT-09. Minted on first use so
+     * existing rows do not need backfilling.
+     */
+    public function teacherRef(): string
+    {
+        if ($this->teacher_ref) {
+            return $this->teacher_ref;
+        }
+
+        do {
+            $ref = 'TCHR-'.random_int(1000, 9999);
+        } while (static::where('teacher_ref', $ref)->exists());
+
+        $this->forceFill(['teacher_ref' => $ref])->save();
+
+        return $ref;
     }
 
     public function categories(): HasMany

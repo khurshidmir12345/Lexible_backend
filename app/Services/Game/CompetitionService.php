@@ -10,7 +10,6 @@ use App\Models\PathStage;
 use App\Models\TestSession;
 use App\Models\User;
 use App\Models\Word;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -28,9 +27,15 @@ class CompetitionService
         protected NotificationService $notifications,
     ) {}
 
-    public function create(User $teacher, Group $group, PathStage $stage, ?array $types = null): Competition
+    /**
+     * `$group` is optional: UT-MD2 lets a teacher run any stage as an open
+     * game, where the invite link is the only thing gating entry.
+     */
+    public function create(User $teacher, ?Group $group, PathStage $stage, ?array $types = null): Competition
     {
-        abort_unless($stage->path_id === $group->path_id, 422,
+        abort_unless($stage->path->teacher_id === $teacher->id, 403, 'Bu bosqich sizniki emas.');
+
+        abort_if($group && $stage->path_id !== $group->path_id, 422,
             'Bu bosqich guruh yoʼlida emas.');
 
         $words = $stage->words()->pluck('words.id');
@@ -41,7 +46,7 @@ class CompetitionService
 
         // A stale lobby for the same stage would confuse the class, so it is
         // retired the moment a new one opens.
-        Competition::where('group_id', $group->id)
+        Competition::where('teacher_id', $teacher->id)
             ->where('path_stage_id', $stage->id)
             ->where('status', 'lobby')
             ->update(['status' => 'cancelled']);
@@ -49,7 +54,7 @@ class CompetitionService
         return Competition::create([
             'code' => $this->freshCode(),
             'teacher_id' => $teacher->id,
-            'group_id' => $group->id,
+            'group_id' => $group?->id,
             'path_stage_id' => $stage->id,
             'types' => $types,
             'word_ids' => $words->all(),
@@ -65,8 +70,14 @@ class CompetitionService
         abort_if($competition->status === 'finished', 409, 'Bu musobaqa tugagan.');
         abort_if($competition->status === 'cancelled', 409, 'Bu musobaqa bekor qilingan.');
 
-        $isMember = $competition->group->students()->whereKey($student->id)->exists();
-        abort_unless($isMember, 403, 'Siz bu guruh oʼquvchisi emassiz.');
+        // An open game has no roster to check against — the link is the gate.
+        if ($competition->group) {
+            $isMember = $competition->group->students()->whereKey($student->id)->exists();
+            abort_unless($isMember, 403, 'Siz bu guruh oʼquvchisi emassiz.');
+        }
+
+        abort_if($competition->teacher_id === $student->id, 409,
+            'Oʼz musobaqangizda oʼynay olmaysiz.');
 
         return CompetitionPlayer::firstOrCreate(
             ['competition_id' => $competition->id, 'user_id' => $student->id],
@@ -82,8 +93,10 @@ class CompetitionService
 
         $competition->update(['status' => 'playing', 'started_at' => now()]);
 
+        $where = $competition->group?->title ?? ($competition->stage?->title ?: 'Musobaqa');
+
         foreach ($competition->players()->with('user')->get() as $player) {
-            $this->notifications->competitionStarted($player->user_id, $competition->group->title);
+            $this->notifications->competitionStarted($player->user_id, $where);
         }
 
         return $competition->fresh();
@@ -210,7 +223,13 @@ class CompetitionService
 
         $joined = $competition->players->keyBy('user_id');
 
-        $rows = $competition->group->students()->orderBy('first_name')->get()
+        // A group game lists the whole class so the missing names show up too.
+        // An open game can only list whoever has actually arrived.
+        $roster = $competition->group
+            ? $competition->group->students()->orderBy('first_name')->get()
+            : $competition->players->map(fn (CompetitionPlayer $player) => $player->user)->filter()->values();
+
+        $rows = $roster
             ->map(fn (User $student) => [
                 'id' => $student->id,
                 'name' => trim("{$student->first_name} {$student->last_name}") ?: 'Oʼquvchi',
@@ -229,7 +248,9 @@ class CompetitionService
             'id' => $competition->id,
             'code' => $competition->code,
             'status' => $competition->status,
-            'group' => $competition->group->title,
+            'open' => $competition->group_id === null,
+            'group' => $competition->group?->title ?? 'Ochiq oʼyin',
+            'stage_id' => $competition->path_stage_id,
             'stage' => $competition->stage?->position,
             'stage_title' => $competition->stage?->title,
             'words' => count($competition->word_ids),
@@ -266,7 +287,9 @@ class CompetitionService
             'id' => $competition->id,
             'code' => $competition->code,
             'status' => $competition->status,
-            'group' => $competition->group->title,
+            'open' => $competition->group_id === null,
+            'group' => $competition->group?->title ?? 'Ochiq oʼyin',
+            'stage_id' => $competition->path_stage_id,
             'stage' => $competition->stage?->position,
             'questions' => $competition->questions_count,
             'participants' => $rows->count(),
@@ -285,8 +308,11 @@ class CompetitionService
         return [
             'code' => $competition->code,
             'status' => $competition->status,
-            'group' => $competition->group->title,
+            'open' => $competition->group_id === null,
+            'group' => $competition->group?->title ?? 'Ochiq oʼyin',
+            'stage_id' => $competition->path_stage_id,
             'stage' => $competition->stage?->position,
+            'stage_title' => $competition->stage?->title,
             'questions' => $competition->questions_count,
             'joined' => (bool) $player,
             'my_status' => $player?->status,

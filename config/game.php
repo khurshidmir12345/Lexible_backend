@@ -89,6 +89,20 @@ return [
     'teaching' => [
         'max_words_per_stage' => 20,
         'stage_unlock_days' => 7,
+
+        /*
+        | UT-08 — the teacher buys seats and the class plays for free.
+        | `seats` 0 is the free tier every teacher starts on.
+        */
+        'plans' => [
+            ['seats' => 10, 'price' => 0, 'label' => 'Tekin', 'note' => '10 tagacha oʼquvchi'],
+            ['seats' => 30, 'price' => 50000, 'label' => '30 oʼquvchi', 'note' => 'kichik guruhlar uchun', 'popular' => true],
+            ['seats' => 50, 'price' => 75000, 'label' => '50 oʼquvchi', 'note' => 'katta guruhlar uchun'],
+            ['seats' => 100, 'price' => 130000, 'label' => '100 oʼquvchi', 'note' => 'oʼquv markazlari uchun'],
+        ],
+
+        // UT-08b — what one student pays per month when the teacher does not.
+        'student_price' => 5000,
     ],
 
     /*
