@@ -46,6 +46,14 @@ class DictionaryService
     /** Fetch a word we have never seen and persist it. */
     public function import(string $word, ?int $frequencyRank = null): ?Word
     {
+        // Callers reach for this directly as a fallback, so the "stay off the
+        // network" switch has to be honoured here and not only in lookup() —
+        // otherwise a slow third-party API can hang a request, or turn an
+        // unrelated test red.
+        if (! config('dictionary.enrich_on_miss')) {
+            return null;
+        }
+
         $normalized = $this->normalize($word);
 
         $english = $this->definitions->fetch($normalized);

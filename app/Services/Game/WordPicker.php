@@ -23,7 +23,7 @@ class WordPicker
     {
         $seen = WordProgress::where('user_id', $user->id)->pluck('word_id');
 
-        $base = fn () => Word::usable($user->native_lang)
+        $base = fn () => Word::teachable($user->native_lang)
             ->whereNotIn('id', $seen->merge($excludeIds)->unique());
 
         // Words at the player's own level first — that is what the level

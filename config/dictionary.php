@@ -49,6 +49,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Translations — Claude
+    |--------------------------------------------------------------------------
+    | The bulk dictionary is translated by Claude rather than a translation
+    | endpoint, because a word is only translatable once you know which sense
+    | is meant. Every request carries the part of speech, the English
+    | definition and an example, which is what stops "home" coming back as
+    | "bosh sahifa".
+    */
+
+    'claude' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('DICT_CLAUDE_MODEL', 'claude-opus-5'),
+        'max_tokens' => 8000,
+        'batch_size' => 40,          // words per request
+        'max_attempts' => 3,         // before a word is parked as failed
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Languages
     |--------------------------------------------------------------------------
     | `auto` are fetched from the translation API; `manual` must be typed by an

@@ -19,8 +19,11 @@ class Word extends Model
             'definition' => 'array',
             'example' => 'array',
             'synonyms' => 'array',
+            'pos_all' => 'array',
             'needs_review' => 'boolean',
             'is_active' => 'boolean',
+            'is_teachable' => 'boolean',
+            'translated_at' => 'datetime',
         ];
     }
 
@@ -47,6 +50,18 @@ class Word extends Model
         return $query->where('is_active', true)
             ->whereNotNull('translations')
             ->where('translations->'.$locale, '!=', null);
+    }
+
+    /**
+     * Words worth handing to a learner unasked.
+     *
+     * The dictionary holds every English word so that search always finds
+     * something, but "the" and "of" top the frequency list and make useless
+     * flashcards — a stage filled by rank alone would be all grammar.
+     */
+    public function scopeTeachable(Builder $query, string $locale = 'uz'): Builder
+    {
+        return $query->usable($locale)->where('is_teachable', true);
     }
 
     /** Primary translation for a locale, e.g. "chiroyli". */
