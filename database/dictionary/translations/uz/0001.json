@@ -1,0 +1,476 @@
+{
+  "is": [
+    "boʻlmoq",
+    "-dir"
+  ],
+  "do": [
+    "qilmoq",
+    "bajarmoq"
+  ],
+  "no": [
+    "yoʻq",
+    "aslo"
+  ],
+  "know": [
+    "bilmoq",
+    "tanimoq"
+  ],
+  "so": [
+    "shunday",
+    "shuncha"
+  ],
+  "go": [
+    "bormoq",
+    "ketmoq"
+  ],
+  "right": [
+    "oʻng",
+    "toʻgʻri"
+  ],
+  "up": [
+    "yuqoriga",
+    "tepaga"
+  ],
+  "oh": [
+    "voy",
+    "obbo"
+  ],
+  "well": [
+    "quduq"
+  ],
+  "yeah": [
+    "ha",
+    "shunday"
+  ],
+  "got": [
+    "oldi",
+    "ega boʻldi"
+  ],
+  "want": [
+    "xohlamoq",
+    "istamoq"
+  ],
+  "think": [
+    "oʻylamoq",
+    "fikrlamoq"
+  ],
+  "good": [
+    "yaxshi",
+    "durust"
+  ],
+  "let": [
+    "ruxsat bermoq",
+    "qoʻymoq"
+  ],
+  "yes": [
+    "ha",
+    "roziman"
+  ],
+  "going": [
+    "ketish",
+    "borish"
+  ],
+  "okay": [
+    "yaxshi",
+    "mayli"
+  ],
+  "gonna": [
+    "-moqchi",
+    "niyatida"
+  ],
+  "tell": [
+    "aytmoq",
+    "soʻzlamoq"
+  ],
+  "say": [
+    "aytmoq",
+    "gapirmoq"
+  ],
+  "hey": [
+    "hoy",
+    "hey"
+  ],
+  "need": [
+    "kerak boʻlmoq",
+    "muhtoj boʻlmoq"
+  ],
+  "down": [
+    "pastga",
+    "quyiga"
+  ],
+  "make": [
+    "yasamoq",
+    "qilmoq"
+  ],
+  "never": [
+    "hech qachon",
+    "aslo"
+  ],
+  "people": [
+    "odamlar",
+    "xalq"
+  ],
+  "little": [
+    "kichik",
+    "ozgina"
+  ],
+  "mean": [
+    "past",
+    "yomon"
+  ],
+  "sorry": [
+    "kechirasiz",
+    "uzr"
+  ],
+  "give": [
+    "bermoq",
+    "uzatmoq"
+  ],
+  "off": [
+    "oʻchiq",
+    "ishlamaydigan"
+  ],
+  "am": [
+    "-man",
+    "boʻlmoq"
+  ],
+  "thank": [
+    "minnatdorchilik bildirmoq",
+    "rahmat aytmoq"
+  ],
+  "even": [
+    "tekis",
+    "silliq"
+  ],
+  "sure": [
+    "ishonchli",
+    "aniq"
+  ],
+  "thing": [
+    "narsa",
+    "buyum"
+  ],
+  "help": [
+    "yordam bermoq",
+    "koʻmaklashmoq"
+  ],
+  "first": [
+    "birinchi",
+    "avvalgi"
+  ],
+  "still": [
+    "harakatsiz",
+    "tinch"
+  ],
+  "find": [
+    "topmoq",
+    "izlab topmoq"
+  ],
+  "nothing": [
+    "hech narsa",
+    "arzimas narsa"
+  ],
+  "sir": [
+    "janob",
+    "hurmatli"
+  ],
+  "uh": [
+    "ha-a",
+    "hm"
+  ],
+  "again": [
+    "yana",
+    "qaytadan"
+  ],
+  "maybe": [
+    "ehtimol",
+    "balki"
+  ],
+  "must": [
+    "moʻgʻor hidi",
+    "zax hid"
+  ],
+  "wait": [
+    "kutmoq",
+    "kutib turmoq"
+  ],
+  "stop": [
+    "bekat",
+    "toʻxtash joyi"
+  ],
+  "call": [
+    "chaqirmoq",
+    "qoʻngʻiroq qilmoq"
+  ],
+  "talk": [
+    "gaplashmoq",
+    "suhbatlashmoq"
+  ],
+  "away": [
+    "uzoqqa",
+    "narigi tomonga"
+  ],
+  "thought": [
+    "fikr",
+    "oʻy"
+  ],
+  "night": [
+    "tun",
+    "kecha"
+  ],
+  "put": [
+    "qoʻymoq",
+    "joylashtirmoq"
+  ],
+  "great": [
+    "katta",
+    "ulkan"
+  ],
+  "last": [
+    "oxirgi",
+    "soʻnggi"
+  ],
+  "better": [
+    "yaxshilamoq",
+    "takomillashtirmoq"
+  ],
+  "told": [
+    "aytdi",
+    "soʻzladi"
+  ],
+  "things": [
+    "buyumlar",
+    "narsalar"
+  ],
+  "always": [
+    "har doim",
+    "doim"
+  ],
+  "keep": [
+    "saqlamoq",
+    "davom ettirmoq"
+  ],
+  "years": [
+    "yillar"
+  ],
+  "leave": [
+    "qoldirmoq",
+    "tark etmoq"
+  ],
+  "money": [
+    "pul",
+    "mablagʻ"
+  ],
+  "around": [
+    "atrofida",
+    "aylana boʻylab"
+  ],
+  "name": [
+    "ism",
+    "nom"
+  ],
+  "place": [
+    "joy",
+    "oʻrin"
+  ],
+  "ever": [
+    "doimo",
+    "hamisha"
+  ],
+  "feel": [
+    "his qilmoq",
+    "sezmoq"
+  ],
+  "guys": [
+    "yigitlar",
+    "bolalar"
+  ],
+  "father": [
+    "ota",
+    "dada"
+  ],
+  "guy": [
+    "yigit",
+    "odam"
+  ],
+  "made": [
+    "yasadi",
+    "qildi"
+  ],
+  "big": [
+    "katta",
+    "yirik"
+  ],
+  "lot": [
+    "koʻp miqdor",
+    "talaygina"
+  ],
+  "done": [
+    "bajarilgan",
+    "tugagan"
+  ],
+  "nice": [
+    "yoqimli",
+    "chiroyli"
+  ],
+  "believe": [
+    "ishonmoq",
+    "eʼtiqod qilmoq"
+  ],
+  "someone": [
+    "kimdir",
+    "allakim"
+  ],
+  "fine": [
+    "yaxshi",
+    "aʼlo"
+  ],
+  "thanks": [
+    "rahmat",
+    "minnatdorchilik"
+  ],
+  "wanted": [
+    "istalgan",
+    "kerakli"
+  ],
+  "kind": [
+    "tur",
+    "xil"
+  ],
+  "coming": [
+    "kelayotgan",
+    "keyingi"
+  ],
+  "ok": [
+    "yaxshi",
+    "mayli"
+  ],
+  "course": [
+    "kurs",
+    "voqealar ketma-ketligi"
+  ],
+  "stay": [
+    "qolmoq",
+    "turmoq"
+  ],
+  "left": [
+    "chap",
+    "chap tomon"
+  ],
+  "dad": [
+    "ota",
+    "dada"
+  ],
+  "happened": [
+    "sodir boʻldi",
+    "yuz berdi"
+  ],
+  "came": [
+    "keldi"
+  ],
+  "wrong": [
+    "notoʻgʻri",
+    "xato"
+  ],
+  "bad": [
+    "yomon",
+    "sifatsiz"
+  ],
+  "might": [
+    "boʻlishi mumkin edi"
+  ],
+  "three": [
+    "uch",
+    "uchlik"
+  ],
+  "listen": [
+    "tinglamoq",
+    "eshitmoq"
+  ],
+  "remember": [
+    "eslamoq",
+    "yodda saqlamoq"
+  ],
+  "show": [
+    "tomosha",
+    "koʻrsatuv"
+  ],
+  "else": [
+    "boshqa",
+    "yana"
+  ],
+  "kill": [
+    "oʻldirmoq",
+    "halok qilmoq"
+  ],
+  "talking": [
+    "gaplashish",
+    "suhbat"
+  ],
+  "found": [
+    "asos solmoq",
+    "tashkil etmoq"
+  ],
+  "next": [
+    "keyingi",
+    "navbatdagi"
+  ],
+  "getting": [
+    "olish",
+    "erishish"
+  ],
+  "care": [
+    "gʻamxoʻrlik",
+    "eʼtibor"
+  ],
+  "car": [
+    "mashina",
+    "avtomobil"
+  ],
+  "looking": [
+    "koʻrinishli"
+  ],
+  "try": [
+    "urinmoq",
+    "harakat qilmoq"
+  ],
+  "went": [
+    "bordi",
+    "ketdi"
+  ],
+  "hi": [
+    "salom"
+  ],
+  "friend": [
+    "doʻst",
+    "oʻrtoq"
+  ],
+  "best": [
+    "eng yaxshi",
+    "aʼlo"
+  ],
+  "mom": [
+    "ona",
+    "oyi"
+  ],
+  "hell": [
+    "doʻzax",
+    "jahannam"
+  ],
+  "trying": [
+    "ogʻir",
+    "mashaqqatli"
+  ],
+  "together": [
+    "birga",
+    "birgalikda"
+  ],
+  "job": [
+    "ish",
+    "vazifa"
+  ],
+  "real": [
+    "haqiqiy",
+    "chin"
+  ]
+}

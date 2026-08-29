@@ -1,0 +1,468 @@
+{
+  "accept": [
+    "qabul qilmoq",
+    "rozi boʻlmoq"
+  ],
+  "boyfriend": [
+    "yigit doʻst",
+    "sevgilisi"
+  ],
+  "besides": [
+    "bundan tashqari",
+    "yana"
+  ],
+  "queen": [
+    "malika",
+    "qirolicha"
+  ],
+  "teacher": [
+    "oʻqituvchi",
+    "ustoz"
+  ],
+  "cops": [
+    "militsiya",
+    "politsiya"
+  ],
+  "sake": [
+    "manfaat",
+    "xotira"
+  ],
+  "loves": [
+    "sevadi",
+    "yaxshi koʻradi"
+  ],
+  "carry": [
+    "koʻtarib bormoq",
+    "olib yurmoq"
+  ],
+  "apartment": [
+    "kvartira",
+    "xonadon"
+  ],
+  "upset": [
+    "xafa qilmoq",
+    "asabini buzmoq"
+  ],
+  "liked": [
+    "yoqdi",
+    "yaxshi koʻrdi"
+  ],
+  "cute": [
+    "yoqimtoy",
+    "shirin"
+  ],
+  "evil": [
+    "yovuz",
+    "yomon niyatli"
+  ],
+  "professor": [
+    "professor"
+  ],
+  "contact": [
+    "aloqa",
+    "tegish"
+  ],
+  "joke": [
+    "hazil",
+    "latifa"
+  ],
+  "cop": [
+    "qoʻlga olmoq",
+    "ushlamoq"
+  ],
+  "huge": [
+    "ulkan",
+    "juda katta"
+  ],
+  "store": [
+    "doʻkon",
+    "ombor"
+  ],
+  "jail": [
+    "qamoqxona",
+    "turma"
+  ],
+  "likes": [
+    "yoqtiradi",
+    "xush koʻradi"
+  ],
+  "lawyer": [
+    "advokat",
+    "yurist"
+  ],
+  "doubt": [
+    "shubhalanmoq",
+    "ikkilanmoq"
+  ],
+  "continue": [
+    "davom etmoq",
+    "davom ettirmoq"
+  ],
+  "appreciate": [
+    "qadrlamoq",
+    "minnatdor boʻlmoq"
+  ],
+  "shop": [
+    "doʻkon",
+    "magazin"
+  ],
+  "driving": [
+    "haydash",
+    "boshqarish"
+  ],
+  "congratulations": [
+    "tabriklaymiz",
+    "muborak boʻlsin"
+  ],
+  "wrote": [
+    "yozdi"
+  ],
+  "village": [
+    "qishloq",
+    "ovul"
+  ],
+  "quit": [
+    "tashlab ketmoq",
+    "voz kechmoq"
+  ],
+  "decision": [
+    "qaror",
+    "hukm"
+  ],
+  "sleeping": [
+    "uxlayotgan",
+    "uyquda"
+  ],
+  "slow": [
+    "sekin",
+    "ogʻir"
+  ],
+  "laughter": [
+    "kulgi",
+    "qahqaha"
+  ],
+  "glass": [
+    "shisha",
+    "stakan"
+  ],
+  "beginning": [
+    "boshlanish",
+    "ibtido"
+  ],
+  "cash": [
+    "naqd pul",
+    "naqd"
+  ],
+  "dying": [
+    "oʻlayotgan",
+    "jon berayotgan"
+  ],
+  "hundred": [
+    "yuz",
+    "yuztalik"
+  ],
+  "difference": [
+    "farq",
+    "tafovut"
+  ],
+  "plane": [
+    "tekislik",
+    "yassi sirt"
+  ],
+  "push": [
+    "itarmoq",
+    "surmoq"
+  ],
+  "mmm": [
+    "mm",
+    "oh"
+  ],
+  "singing": [
+    "kuylash",
+    "ashula aytish"
+  ],
+  "eating": [
+    "yeyish",
+    "ovqatlanish"
+  ],
+  "tree": [
+    "daraxt"
+  ],
+  "madam": [
+    "xonim",
+    "beka"
+  ],
+  "gift": [
+    "sovgʻa",
+    "tuhfa"
+  ],
+  "truck": [
+    "yuk mashinasi",
+    "gʻildirak"
+  ],
+  "putting": [
+    "qoʻyish",
+    "joylashtirish"
+  ],
+  "board": [
+    "taxta",
+    "doska"
+  ],
+  "grab": [
+    "changallash",
+    "tortib olish"
+  ],
+  "beer": [
+    "pivo"
+  ],
+  "stuck": [
+    "tiqilib qolgan",
+    "qimirlay olmaydigan"
+  ],
+  "support": [
+    "tayanch",
+    "qoʻllab-quvvatlash"
+  ],
+  "rules": [
+    "qoidalar",
+    "qonun-qoidalar"
+  ],
+  "reach": [
+    "yetmoq",
+    "choʻzmoq"
+  ],
+  "wind": [
+    "shamol",
+    "yel"
+  ],
+  "colonel": [
+    "polkovnik"
+  ],
+  "max": [
+    "eng koʻp",
+    "chegara"
+  ],
+  "immediately": [
+    "darhol",
+    "shu zahoti"
+  ],
+  "seconds": [
+    "ikkinchi ulush",
+    "qoʻshimcha porsiya"
+  ],
+  "gives": [
+    "beradi",
+    "uzatadi"
+  ],
+  "experience": [
+    "tajriba",
+    "sinov"
+  ],
+  "cheers": [
+    "sogʻliginggiz uchun",
+    "olqish"
+  ],
+  "computer": [
+    "kompyuter"
+  ],
+  "planet": [
+    "sayyora"
+  ],
+  "promised": [
+    "vaʼda qilingan",
+    "kutilgan"
+  ],
+  "bus": [
+    "avtobus"
+  ],
+  "dirty": [
+    "kir",
+    "iflos"
+  ],
+  "search": [
+    "qidirmoq",
+    "izlamoq"
+  ],
+  "staying": [
+    "turish",
+    "qolish"
+  ],
+  "dreams": [
+    "orzular",
+    "tushlar"
+  ],
+  "arrest": [
+    "hibsga olish",
+    "toʻxtatish"
+  ],
+  "holding": [
+    "mulk",
+    "aktiv"
+  ],
+  "suddenly": [
+    "birdan",
+    "toʻsatdan"
+  ],
+  "usually": [
+    "odatda",
+    "koʻpincha"
+  ],
+  "lots": [
+    "koʻp",
+    "talaygina"
+  ],
+  "shoes": [
+    "poyabzal",
+    "tuflilar"
+  ],
+  "jump": [
+    "sakramoq",
+    "irgʻimoq"
+  ],
+  "rid": [
+    "qutulmoq",
+    "xalos qilmoq"
+  ],
+  "yo": [
+    "hey",
+    "salom"
+  ],
+  "knock": [
+    "taqillatmoq",
+    "urmoq"
+  ],
+  "owe": [
+    "qarzdor boʻlmoq",
+    "qarzi boʻlmoq"
+  ],
+  "harry": [
+    "talon-taroj qilmoq",
+    "bosqinchilik qilmoq"
+  ],
+  "worst": [
+    "eng yomon"
+  ],
+  "river": [
+    "daryo"
+  ],
+  "aunt": [
+    "xola",
+    "amma"
+  ],
+  "patient": [
+    "bemor",
+    "kasal"
+  ],
+  "aah": [
+    "voy",
+    "oh"
+  ],
+  "passed": [
+    "oʻtgan",
+    "oʻtib ketgan"
+  ],
+  "final": [
+    "yakuniy imtihon",
+    "final"
+  ],
+  "summer": [
+    "yoz"
+  ],
+  "bob": [
+    "kalta soch turmagi"
+  ],
+  "listening": [
+    "tinglash",
+    "eshitish"
+  ],
+  "escape": [
+    "qochish",
+    "qutulish"
+  ],
+  "everywhere": [
+    "hamma joyda",
+    "har yerda"
+  ],
+  "moon": [
+    "dumbasini koʻrsatmoq"
+  ],
+  "arms": [
+    "qurol",
+    "qurol-yarogʻ"
+  ],
+  "turns": [
+    "burilishlar",
+    "navbatlar"
+  ],
+  "address": [
+    "kirishmoq",
+    "murojaat qilmoq"
+  ],
+  "ow": [
+    "voy",
+    "oy"
+  ],
+  "match": [
+    "musobaqa",
+    "bellashuv"
+  ],
+  "grand": [
+    "ulugʻ",
+    "buyuk"
+  ],
+  "yep": [
+    "ha",
+    "shunday"
+  ],
+  "shh": [
+    "jim",
+    "tss"
+  ],
+  "nervous": [
+    "asabiy",
+    "asablarga oid"
+  ],
+  "choose": [
+    "tanlamoq",
+    "saylamoq"
+  ],
+  "decide": [
+    "hal qilmoq",
+    "qaror qilmoq"
+  ],
+  "mate": [
+    "moslashmoq",
+    "birikmoq"
+  ],
+  "drinking": [
+    "ichishga yaroqli",
+    "ichimlik"
+  ],
+  "press": [
+    "bosmoq",
+    "siqmoq"
+  ],
+  "bother": [
+    "bezovta qilmoq",
+    "xalaqit bermoq"
+  ],
+  "blame": [
+    "ayb",
+    "tanbeh"
+  ],
+  "drugs": [
+    "dorilar",
+    "giyohvand moddalar"
+  ],
+  "type": [
+    "tur",
+    "toifa"
+  ],
+  "rings": [
+    "halqalar"
+  ],
+  "mission": [
+    "vazifa",
+    "topshiriq"
+  ]
+}

@@ -24,7 +24,7 @@ class ImportDictionary extends Command
 {
     protected $signature = 'dictionary:import
         {--file=storage/app/dictionary/words.jsonl : Compact file from dictionary:distill}
-        {--frequency=storage/app/dictionary/frequency-en.txt : Frequency-ordered word list}
+        {--frequency=database/dictionary/frequency-en.txt : Frequency-ordered word list}
         {--chunk=2000 : Rows per insert}
         {--fresh : Wipe machine-imported words first}
         {--dry : Count what would happen, write nothing}';

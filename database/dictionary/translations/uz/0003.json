@@ -1,0 +1,557 @@
+{
+  "blood": [
+    "qon"
+  ],
+  "able": [
+    "qodir",
+    "qobiliyatli"
+  ],
+  "lady": [
+    "beka",
+    "xonim"
+  ],
+  "anymore": [
+    "endi",
+    "boshqa"
+  ],
+  "playing": [
+    "ijro",
+    "namoyish"
+  ],
+  "shot": [
+    "otish",
+    "zarba"
+  ],
+  "trouble": [
+    "muammo",
+    "tashvish"
+  ],
+  "city": [
+    "shahar"
+  ],
+  "walk": [
+    "yurmoq",
+    "piyoda yurmoq"
+  ],
+  "town": [
+    "shaharcha",
+    "qishloq"
+  ],
+  "trust": [
+    "ishonch",
+    "eʼtimod"
+  ],
+  "met": [
+    "uchrashdi",
+    "koʻrishdi"
+  ],
+  "question": [
+    "savol",
+    "masala"
+  ],
+  "brought": [
+    "olib keldi",
+    "keltirdi"
+  ],
+  "welcome": [
+    "kutib olish",
+    "xush kelibsiz deyish"
+  ],
+  "high": [
+    "baland",
+    "yuqori"
+  ],
+  "wow": [
+    "voy",
+    "qoyil"
+  ],
+  "couple": [
+    "juft",
+    "ikkita"
+  ],
+  "died": [
+    "oʻldi",
+    "vafot etdi"
+  ],
+  "cool": [
+    "salqin",
+    "sovuqroq"
+  ],
+  "free": [
+    "erkin",
+    "ozod"
+  ],
+  "seems": [
+    "koʻrinadi",
+    "tuyuladi"
+  ],
+  "power": [
+    "kuch",
+    "quvvat"
+  ],
+  "whoa": [
+    "toʻxta",
+    "hoy"
+  ],
+  "bye": [
+    "xayr"
+  ],
+  "telling": [
+    "hikoya qilish",
+    "aytib berish"
+  ],
+  "honey": [
+    "asal"
+  ],
+  "tried": [
+    "sinalgan",
+    "ishonchli"
+  ],
+  "front": [
+    "old tomon",
+    "peshtoq"
+  ],
+  "team": [
+    "jamoa",
+    "guruh"
+  ],
+  "gun": [
+    "miltiq",
+    "qurol"
+  ],
+  "boys": [
+    "oʻgʻil bolalar",
+    "yigitlar"
+  ],
+  "send": [
+    "joʻnatmoq",
+    "yubormoq"
+  ],
+  "news": [
+    "yangilik",
+    "xabar"
+  ],
+  "stupid": [
+    "ahmoq",
+    "nodon"
+  ],
+  "hurry": [
+    "shoshilmoq",
+    "tezlashtirmoq"
+  ],
+  "full": [
+    "toʻla",
+    "toʻlgan"
+  ],
+  "months": [
+    "oylar"
+  ],
+  "save": [
+    "saqlab qolmoq",
+    "qutqarmoq"
+  ],
+  "sometimes": [
+    "baʼzan",
+    "gohida"
+  ],
+  "become": [
+    "boʻlmoq",
+    "aylanmoq"
+  ],
+  "along": [
+    "birga",
+    "yonma-yon"
+  ],
+  "hate": [
+    "nafrat",
+    "yomon koʻrilgan narsa"
+  ],
+  "food": [
+    "ovqat",
+    "taom"
+  ],
+  "outside": [
+    "tashqi",
+    "sirtqi"
+  ],
+  "needs": [
+    "ehtiyojlar",
+    "talablar"
+  ],
+  "clear": [
+    "tozalamoq",
+    "boʻshatmoq"
+  ],
+  "order": [
+    "tartib",
+    "ketma-ketlik"
+  ],
+  "fact": [
+    "dalil",
+    "haqiqat"
+  ],
+  "lord": [
+    "hukmdor",
+    "xoʻjayin"
+  ],
+  "captain": [
+    "kapitan",
+    "sardor"
+  ],
+  "six": [
+    "olti",
+    "oltilik"
+  ],
+  "funny": [
+    "kulgili",
+    "qiziq"
+  ],
+  "black": [
+    "qora"
+  ],
+  "alive": [
+    "tirik",
+    "jonli"
+  ],
+  "pick": [
+    "ketmon",
+    "tesha"
+  ],
+  "feeling": [
+    "his",
+    "sezgi"
+  ],
+  "living": [
+    "tirik",
+    "yashayotgan"
+  ],
+  "ahead": [
+    "oldinga",
+    "oldinda"
+  ],
+  "plan": [
+    "reja",
+    "chizma"
+  ],
+  "dinner": [
+    "tushlik",
+    "kechki ovqat"
+  ],
+  "sort": [
+    "tur",
+    "xil"
+  ],
+  "leaving": [
+    "ketish",
+    "tark etish"
+  ],
+  "running": [
+    "yuguruvchi",
+    "harakatdagi"
+  ],
+  "boss": [
+    "boshliq",
+    "xoʻjayin"
+  ],
+  "alright": [
+    "mayli",
+    "yaxshi"
+  ],
+  "promise": [
+    "vaʼda",
+    "qasam"
+  ],
+  "taken": [
+    "mahliyo",
+    "berilib ketgan"
+  ],
+  "safe": [
+    "xavfsiz",
+    "omon"
+  ],
+  "ma": [
+    "ona",
+    "oyi"
+  ],
+  "book": [
+    "kitob"
+  ],
+  "sent": [
+    "tanga",
+    "sent"
+  ],
+  "white": [
+    "oq"
+  ],
+  "perfect": [
+    "mukammal",
+    "benuqson"
+  ],
+  "lives": [
+    "hayotlar",
+    "umrlar"
+  ],
+  "special": [
+    "chegirma",
+    "maxsus taklif"
+  ],
+  "parents": [
+    "ota-ona",
+    "ota-onalar"
+  ],
+  "sounds": [
+    "tovushlar",
+    "ovozlar"
+  ],
+  "serious": [
+    "jiddiy",
+    "vazmin"
+  ],
+  "sick": [
+    "kasal",
+    "betob"
+  ],
+  "company": [
+    "kompaniya",
+    "jamoa"
+  ],
+  "ha": [
+    "ha-ha",
+    "he"
+  ],
+  "scared": [
+    "qoʻrqqan",
+    "vahimaga tushgan"
+  ],
+  "uncle": [
+    "togʻa",
+    "amaki"
+  ],
+  "poor": [
+    "kambagʻal",
+    "qashshoq"
+  ],
+  "earth": [
+    "tuproq",
+    "yer"
+  ],
+  "possible": [
+    "mumkin",
+    "ehtimoliy"
+  ],
+  "touch": [
+    "tegmoq",
+    "teginmoq"
+  ],
+  "sound": [
+    "jaranglamoq",
+    "ovoz chiqarmoq"
+  ],
+  "top": [
+    "tepa",
+    "yuqori qism"
+  ],
+  "laughs": [
+    "kulgi"
+  ],
+  "cannot": [
+    "imkonsiz ish"
+  ],
+  "asking": [
+    "soʻrash",
+    "iltimos qilish"
+  ],
+  "glad": [
+    "xursand",
+    "mamnun"
+  ],
+  "control": [
+    "nazorat",
+    "boshqaruv"
+  ],
+  "hmm": [
+    "hm",
+    "ha-a"
+  ],
+  "drive": [
+    "intilish",
+    "harakat"
+  ],
+  "hair": [
+    "soch",
+    "tuk"
+  ],
+  "jack": [
+    "yigit",
+    "odam"
+  ],
+  "luck": [
+    "omad",
+    "baxt"
+  ],
+  "murder": [
+    "qotillik",
+    "odam oʻldirish"
+  ],
+  "happens": [
+    "sodir boʻladi",
+    "yuz beradi"
+  ],
+  "ten": [
+    "oʻn",
+    "oʻnlik"
+  ],
+  "daddy": [
+    "ota",
+    "dadajon"
+  ],
+  "finally": [
+    "nihoyat",
+    "oxir-oqibat"
+  ],
+  "chuckles": [
+    "past kulgi"
+  ],
+  "cold": [
+    "sovuq",
+    "muzdek"
+  ],
+  "seem": [
+    "koʻrinmoq",
+    "tuyulmoq"
+  ],
+  "laughing": [
+    "kulish",
+    "kulgi"
+  ],
+  "words": [
+    "janjal",
+    "tortishuv"
+  ],
+  "hospital": [
+    "kasalxona",
+    "shifoxona"
+  ],
+  "street": [
+    "koʻcha"
+  ],
+  "hang": [
+    "osilmoq",
+    "osib qoʻymoq"
+  ],
+  "meeting": [
+    "uchrashuv",
+    "yigʻilish"
+  ],
+  "till": [
+    "kassa apparati",
+    "pul yashigi"
+  ],
+  "others": [
+    "boshqalar",
+    "oʻzgalar"
+  ],
+  "catch": [
+    "ushlamoq",
+    "tutmoq"
+  ],
+  "follow": [
+    "ergashmoq",
+    "kuzatmoq"
+  ],
+  "sense": [
+    "sezgi",
+    "his-tuygʻu"
+  ],
+  "sex": [
+    "jins"
+  ],
+  "lie": [
+    "yotmoq",
+    "choʻzilmoq"
+  ],
+  "master": [
+    "usta",
+    "xoʻjayin"
+  ],
+  "known": [
+    "maʼlum narsa",
+    "tanish holat"
+  ],
+  "dream": [
+    "tush koʻrmoq",
+    "orzu qilmoq"
+  ],
+  "write": [
+    "yozmoq",
+    "bitmoq"
+  ],
+  "voice": [
+    "ovoz",
+    "tovush"
+  ],
+  "rather": [
+    "afzal",
+    "koʻra"
+  ],
+  "felt": [
+    "kigiz",
+    "namat"
+  ],
+  "lucky": [
+    "omadli",
+    "baxtli"
+  ],
+  "somewhere": [
+    "qayerdadir",
+    "biror joyda"
+  ],
+  "bet": [
+    "garov",
+    "bahs"
+  ],
+  "longer": [
+    "intiluvchi",
+    "sogʻinuvchi"
+  ],
+  "calling": [
+    "chorlov",
+    "kasb-daʼvat"
+  ],
+  "worked": [
+    "ishlangan",
+    "bezatilgan"
+  ],
+  "quiet": [
+    "jim",
+    "sokin"
+  ],
+  "looked": [
+    "qaradi",
+    "koʻrdi"
+  ],
+  "less": [
+    "kamroq",
+    "ozroq"
+  ],
+  "pull": [
+    "tortmoq",
+    "sudramoq"
+  ],
+  "beat": [
+    "zarba",
+    "urish"
+  ],
+  "careful": [
+    "ehtiyotkor",
+    "diqqatli"
+  ],
+  "coffee": [
+    "qahva",
+    "kofe"
+  ],
+  "return": [
+    "qaytmoq",
+    "qaytib kelmoq"
+  ]
+}

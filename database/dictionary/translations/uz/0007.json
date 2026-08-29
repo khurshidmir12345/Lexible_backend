@@ -1,0 +1,490 @@
+{
+  "named": [
+    "nomlangan",
+    "atalgan"
+  ],
+  "heaven": [
+    "osmon",
+    "jannat"
+  ],
+  "picked": [
+    "tanlangan",
+    "terilgan"
+  ],
+  "race": [
+    "irq",
+    "millat"
+  ],
+  "books": [
+    "hisob daftari",
+    "buxgalteriya yozuvlari"
+  ],
+  "further": [
+    "uzoqroq",
+    "yanada"
+  ],
+  "action": [
+    "harakat",
+    "faoliyat"
+  ],
+  "allowed": [
+    "ruxsat etilgan",
+    "joiz"
+  ],
+  "orders": [
+    "buyruqlar",
+    "buyurtmalar"
+  ],
+  "learned": [
+    "bilimdon",
+    "olim"
+  ],
+  "price": [
+    "narx belgilamoq",
+    "baholamoq"
+  ],
+  "arrived": [
+    "yetib keldi",
+    "keldi"
+  ],
+  "nick": [
+    "oʻyiq qilmoq",
+    "tirnamoq"
+  ],
+  "otherwise": [
+    "aks holda",
+    "boshqacha"
+  ],
+  "pictures": [
+    "kinoteatr",
+    "kino"
+  ],
+  "fit": [
+    "mos kelmoq",
+    "toʻgʻri kelmoq"
+  ],
+  "smoke": [
+    "chekmoq",
+    "tutun chiqarmoq"
+  ],
+  "favor": [
+    "yaxshilik",
+    "iltifot"
+  ],
+  "played": [
+    "oʻynadi",
+    "ijro etdi"
+  ],
+  "notice": [
+    "sezish",
+    "eʼtibor berish"
+  ],
+  "awesome": [
+    "zoʻr odam",
+    "ajoyib inson"
+  ],
+  "smile": [
+    "jilmaymoq",
+    "tabassum qilmoq"
+  ],
+  "director": [
+    "direktor",
+    "rahbar"
+  ],
+  "guard": [
+    "qorovul",
+    "soqchi"
+  ],
+  "begin": [
+    "boshlamoq",
+    "kirishmoq"
+  ],
+  "spot": [
+    "dogʻ",
+    "nuqta"
+  ],
+  "surprised": [
+    "hayron qolgan",
+    "ajablangan"
+  ],
+  "innocent": [
+    "begunoh",
+    "aybsiz"
+  ],
+  "narrator": [
+    "hikoyachi",
+    "rovi"
+  ],
+  "feelings": [
+    "hislar",
+    "tuygʻular"
+  ],
+  "enemy": [
+    "dushman",
+    "gʻanim"
+  ],
+  "battle": [
+    "jang",
+    "kurash"
+  ],
+  "dollars": [
+    "dollarlar"
+  ],
+  "allow": [
+    "ruxsat bermoq",
+    "yoʻl qoʻymoq"
+  ],
+  "nine": [
+    "toʻqqiz",
+    "toʻqqizlik"
+  ],
+  "gay": [
+    "gomoseksual"
+  ],
+  "guilty": [
+    "aybdor",
+    "gunohkor"
+  ],
+  "apart": [
+    "alohida",
+    "ayri"
+  ],
+  "earlier": [
+    "oldingi",
+    "avvalgi"
+  ],
+  "duty": [
+    "burch",
+    "vazifa"
+  ],
+  "suit": [
+    "kostyum",
+    "kiyim toʻplami"
+  ],
+  "bell": [
+    "qoʻngʻiroq"
+  ],
+  "legs": [
+    "oyoqlar"
+  ],
+  "hero": [
+    "qahramon",
+    "botir"
+  ],
+  "destroy": [
+    "yoʻq qilmoq",
+    "vayron qilmoq"
+  ],
+  "stage": [
+    "bosqich",
+    "davr"
+  ],
+  "bunch": [
+    "tuda",
+    "bogʻlam"
+  ],
+  "according": [
+    "muvofiq",
+    "koʻra"
+  ],
+  "bigger": [
+    "kattaroq",
+    "yirikroq"
+  ],
+  "grunting": [
+    "xirillash",
+    "gʻoʻldirash"
+  ],
+  "helping": [
+    "yordam berish",
+    "koʻmaklashish"
+  ],
+  "admit": [
+    "kiritmoq",
+    "tan olmoq"
+  ],
+  "names": [
+    "ismlar",
+    "nomlar"
+  ],
+  "witness": [
+    "guvohlik",
+    "shohidlik"
+  ],
+  "upstairs": [
+    "yuqoriga",
+    "tepa qavatga"
+  ],
+  "arm": [
+    "qoʻl",
+    "bilak"
+  ],
+  "steal": [
+    "oʻgʻirlamoq",
+    "talamoq"
+  ],
+  "kick": [
+    "tepki",
+    "zarba"
+  ],
+  "twice": [
+    "ikki marta",
+    "ikki bor"
+  ],
+  "cross": [
+    "xoch",
+    "kesishma"
+  ],
+  "ways": [
+    "masofa",
+    "yoʻllar"
+  ],
+  "sergeant": [
+    "serjant"
+  ],
+  "indeed": [
+    "haqiqatan",
+    "darhaqiqat"
+  ],
+  "keeping": [
+    "muvofiqlik",
+    "uygʻunlik"
+  ],
+  "energy": [
+    "quvvat",
+    "energiya"
+  ],
+  "waste": [
+    "chiqindi",
+    "isrof"
+  ],
+  "helped": [
+    "yordam berdi",
+    "koʻmaklashdi"
+  ],
+  "fired": [
+    "ishdan boʻshatilgan",
+    "haydalgan"
+  ],
+  "favorite": [
+    "sevimli",
+    "eng yoqqan"
+  ],
+  "tony": [
+    "zamonaviy",
+    "olifta"
+  ],
+  "taste": [
+    "taʼm",
+    "maza"
+  ],
+  "locked": [
+    "qulflangan",
+    "berkitilgan"
+  ],
+  "places": [
+    "joylar",
+    "oʻrinlar"
+  ],
+  "writing": [
+    "yozuv",
+    "yozish"
+  ],
+  "brothers": [
+    "akalar",
+    "birodarlar"
+  ],
+  "starts": [
+    "boshlanadi",
+    "boshlanishlar"
+  ],
+  "prince": [
+    "shahzoda",
+    "peshqadam"
+  ],
+  "form": [
+    "shakl",
+    "koʻrinish"
+  ],
+  "sold": [
+    "sotildi",
+    "sotilgan"
+  ],
+  "silly": [
+    "ahmoqona",
+    "kulgili"
+  ],
+  "mention": [
+    "tilga olish",
+    "eslatib oʻtish"
+  ],
+  "build": [
+    "qurmoq",
+    "yasamoq"
+  ],
+  "throat": [
+    "tomoq",
+    "boʻgʻiz"
+  ],
+  "hole": [
+    "teshik",
+    "chuqur"
+  ],
+  "figured": [
+    "naqshli",
+    "gulli"
+  ],
+  "track": [
+    "iz",
+    "yoʻlak"
+  ],
+  "ringing": [
+    "jiringlash",
+    "qoʻngʻiroq ovozi"
+  ],
+  "lock": [
+    "qulf",
+    "zulf"
+  ],
+  "hiding": [
+    "yashirinish",
+    "berkinish"
+  ],
+  "seemed": [
+    "koʻrindi",
+    "tuyuldi"
+  ],
+  "breakfast": [
+    "nonushta"
+  ],
+  "engine": [
+    "dvigatel",
+    "motor"
+  ],
+  "written": [
+    "yozma",
+    "yozilgan"
+  ],
+  "complete": [
+    "toʻliq",
+    "butun"
+  ],
+  "video": [
+    "video",
+    "tasvir"
+  ],
+  "applause": [
+    "qarsaklar",
+    "olqish"
+  ],
+  "however": [
+    "ammo",
+    "shunga qaramay"
+  ],
+  "pressure": [
+    "bosim",
+    "tazyiq"
+  ],
+  "fresh": [
+    "yangi",
+    "tetik"
+  ],
+  "weapon": [
+    "qurol",
+    "yarogʻ"
+  ],
+  "stole": [
+    "yelka roʻmoli",
+    "sharf"
+  ],
+  "study": [
+    "oʻqish",
+    "tadqiqot"
+  ],
+  "burn": [
+    "yoqmoq",
+    "kuydirmoq"
+  ],
+  "treat": [
+    "muzokara olib bormoq",
+    "kelishmoq"
+  ],
+  "roll": [
+    "dumalamoq",
+    "aylanmoq"
+  ],
+  "double": [
+    "ikki barobar",
+    "qoʻsh"
+  ],
+  "spirit": [
+    "ruh",
+    "jon"
+  ],
+  "danger": [
+    "xavf",
+    "xatar"
+  ],
+  "cost": [
+    "turmoq",
+    "qimmatga tushmoq"
+  ],
+  "empty": [
+    "boʻsh",
+    "quruq"
+  ],
+  "level": [
+    "sath",
+    "daraja"
+  ],
+  "memory": [
+    "xotira",
+    "yod"
+  ],
+  "acting": [
+    "aktyorlik",
+    "rol ijrosi"
+  ],
+  "interest": [
+    "foiz",
+    "foiz stavkasi"
+  ],
+  "nose": [
+    "burun"
+  ],
+  "plans": [
+    "rejalar"
+  ],
+  "following": [
+    "izdoshlar",
+    "muxlislar"
+  ],
+  "built": [
+    "baquvvat",
+    "chiniqqan"
+  ],
+  "closer": [
+    "yopuvchi",
+    "yakunlovchi"
+  ],
+  "ray": [
+    "nur",
+    "shuʼla"
+  ],
+  "band": [
+    "tasma",
+    "lenta"
+  ],
+  "apparently": [
+    "koʻrinishidan",
+    "shekilli"
+  ],
+  "excited": [
+    "hayajonlangan",
+    "qiziqib ketgan"
+  ],
+  "losing": [
+    "yoʻqotish",
+    "boy berish"
+  ]
+}

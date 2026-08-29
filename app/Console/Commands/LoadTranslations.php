@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\File;
  * The translations live in the repository as plain JSON, one directory per
  * language:
  *
- *   storage/app/dictionary/translations/uz/0001-1000.json
- *   storage/app/dictionary/translations/ru/0001-1000.json
+ *   database/dictionary/translations/uz/0001.json
+ *   database/dictionary/translations/ru/0001.json
  *
  * Each file is a flat map of English word to accepted answers, best first:
  *
@@ -36,7 +36,7 @@ class LoadTranslations extends Command
     public function handle(): int
     {
         $lang = $this->option('lang');
-        $dir = $this->option('dir') ?: storage_path("app/dictionary/translations/{$lang}");
+        $dir = $this->option('dir') ?: base_path("database/dictionary/translations/{$lang}");
 
         if (! File::isDirectory($dir)) {
             $this->error("Papka topilmadi: {$dir}");
@@ -184,7 +184,7 @@ class LoadTranslations extends Command
                 continue;
             }
 
-            $value = trim($value);
+            $value = $this->latinise(trim($value));
 
             // Cyrillic would never match a typed answer, and a sentence is a
             // definition rather than a translation.
@@ -196,5 +196,25 @@ class LoadTranslations extends Command
         }
 
         return array_slice(array_values(array_unique($out)), 0, 4);
+    }
+
+    /**
+     * Uzbek is written here in Latin, but a Cyrillic "а" is indistinguishable
+     * from a Latin "a" on screen and gets typed by accident constantly. A word
+     * carrying one would never match what a learner types, and the mistake is
+     * invisible in review — so the look-alikes are simply converted.
+     *
+     * Anything Cyrillic that is *not* a look-alike survives and is rejected
+     * further up, because that is a real mistake rather than a slip.
+     */
+    protected function latinise(string $value): string
+    {
+        return strtr($value, [
+            'а' => 'a', 'е' => 'e', 'о' => 'o', 'р' => 'p', 'с' => 'c', 'у' => 'y',
+            'х' => 'x', 'к' => 'k', 'і' => 'i', 'ј' => 'j', 'ѕ' => 's', 'һ' => 'h',
+            'ԛ' => 'q', 'ԝ' => 'w', 'А' => 'A', 'В' => 'B', 'Е' => 'E', 'К' => 'K',
+            'М' => 'M', 'Н' => 'H', 'О' => 'O', 'Р' => 'P', 'С' => 'C', 'Т' => 'T',
+            'Х' => 'X',
+        ]);
     }
 }
