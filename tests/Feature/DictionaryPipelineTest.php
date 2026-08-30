@@ -4,7 +4,8 @@ namespace Tests\Feature;
 
 use App\Console\Commands\ImportDictionary;
 use App\Models\Word;
-use App\Services\Dictionary\Providers\ClaudeTranslator;
+use App\Services\Dictionary\Contracts\Translator;
+use App\Services\Dictionary\Providers\GeminiTranslator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
@@ -305,7 +306,7 @@ class DictionaryPipelineTest extends TestCase
 
     public function test_the_prompt_carries_the_sense_not_just_the_word(): void
     {
-        $prompt = app(ClaudeTranslator::class)->payload([
+        $prompt = app(GeminiTranslator::class)->payload([
             ['word' => 'home', 'pos' => 'noun', 'gloss' => 'A dwelling.', 'example' => 'He went home.'],
         ]);
 
@@ -319,12 +320,39 @@ class DictionaryPipelineTest extends TestCase
     {
         $asked = [['word' => 'home', 'pos' => 'noun', 'gloss' => null, 'example' => null]];
 
-        $result = app(ClaudeTranslator::class)->parse(
-            '{"home":["uy","turar joy"],"invented":["yoʻq"]}',
+        $result = app(GeminiTranslator::class)->parse(
+            '{"home":{"uz":["uy","turar joy"]},"invented":{"uz":["yoʻq"]}}',
             $asked,
         );
 
-        $this->assertSame(['home' => ['uy', 'turar joy']], $result);
+        $this->assertSame(['home' => ['uz' => ['uy', 'turar joy']]], $result);
+    }
+
+    public function test_it_fills_several_languages_in_one_call(): void
+    {
+        $asked = [['word' => 'home', 'pos' => 'noun', 'gloss' => null, 'example' => null]];
+
+        $result = app(GeminiTranslator::class)->parse(
+            '{"home":{"uz":["uy"],"ru":["дом"]}}',
+            $asked,
+            ['uz', 'ru'],
+        );
+
+        $this->assertSame(['home' => ['uz' => ['uy'], 'ru' => ['дом']]], $result);
+    }
+
+    public function test_each_language_is_held_to_its_own_script(): void
+    {
+        $asked = [['word' => 'home', 'pos' => null, 'gloss' => null, 'example' => null]];
+
+        // Cyrillic is right for Russian and wrong for Uzbek; Latin the reverse.
+        $result = app(GeminiTranslator::class)->parse(
+            '{"home":{"uz":["уй","uy"],"ru":["dom","дом"]}}',
+            $asked,
+            ['uz', 'ru'],
+        );
+
+        $this->assertSame(['home' => ['uz' => ['uy'], 'ru' => ['дом']]], $result);
     }
 
     public function test_it_refuses_cyrillic_and_prose(): void
@@ -334,24 +362,25 @@ class DictionaryPipelineTest extends TestCase
             ['word' => 'dwelling', 'pos' => null, 'gloss' => null, 'example' => null],
         ];
 
-        $result = app(ClaudeTranslator::class)->parse(
-            '{"home":["уй","uy"],"dwelling":["odam yashaydigan va turadigan joy haqidagi umumiy tushuncha soʻzi"]}',
+        $result = app(GeminiTranslator::class)->parse(
+            '{"home":{"uz":["уй","uy"]},"dwelling":{"uz":["odam yashaydigan va turadigan joy haqidagi umumiy tushuncha soʻzi"]}}',
             $asked,
         );
 
-        $this->assertSame(['home' => ['uy']], $result);
+        // The Cyrillic form and the sentence-length "translation" both go.
+        $this->assertSame(['home' => ['uz' => ['uy']]], $result);
     }
 
     public function test_it_survives_a_fenced_reply(): void
     {
         $asked = [['word' => 'home', 'pos' => null, 'gloss' => null, 'example' => null]];
 
-        $result = app(ClaudeTranslator::class)->parse(
-            "```json\n{\"home\":[\"uy\"]}\n```",
+        $result = app(GeminiTranslator::class)->parse(
+            "```json\n{\"home\":{\"uz\":[\"uy\"]}}\n```",
             $asked,
         );
 
-        $this->assertSame(['home' => ['uy']], $result);
+        $this->assertSame(['home' => ['uz' => ['uy']]], $result);
     }
 
     public function test_the_queue_starts_with_the_words_learners_meet(): void
@@ -381,11 +410,13 @@ class DictionaryPipelineTest extends TestCase
     {
         $this->import([$this->entry()], ['home']);
 
-        $this->swap(ClaudeTranslator::class, new class extends ClaudeTranslator
+        $this->swap(Translator::class, new class implements Translator
         {
-            public function translate(array $words): array
+            public function name(): string { return 'gemini'; }
+
+            public function translate(array $words, array $locales = ['uz']): array
             {
-                return ['home' => ['uy', 'turar joy']];
+                return ['home' => ['uz' => ['uy', 'turar joy']]];
             }
         });
 
@@ -395,7 +426,7 @@ class DictionaryPipelineTest extends TestCase
 
         $this->assertSame(['uy', 'turar joy'], $word->translations['uz']);
         $this->assertSame('done', $word->translation_status);
-        $this->assertSame('claude', $word->translation_source);
+        $this->assertSame('gemini', $word->translation_source);
         $this->assertFalse($word->needs_review);
         $this->assertNotNull($word->translated_at);
     }
@@ -404,9 +435,11 @@ class DictionaryPipelineTest extends TestCase
     {
         $this->import([$this->entry()], ['home']);
 
-        $this->swap(ClaudeTranslator::class, new class extends ClaudeTranslator
+        $this->swap(Translator::class, new class implements Translator
         {
-            public function translate(array $words): array
+            public function name(): string { return 'gemini'; }
+
+            public function translate(array $words, array $locales = ['uz']): array
             {
                 return [];
             }
@@ -427,9 +460,11 @@ class DictionaryPipelineTest extends TestCase
     {
         $this->import([$this->entry()], ['home']);
 
-        $this->swap(ClaudeTranslator::class, new class extends ClaudeTranslator
+        $this->swap(Translator::class, new class implements Translator
         {
-            public function translate(array $words): array
+            public function name(): string { return 'gemini'; }
+
+            public function translate(array $words, array $locales = ['uz']): array
             {
                 throw new \RuntimeException('rate limited');
             }

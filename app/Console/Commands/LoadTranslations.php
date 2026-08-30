@@ -125,6 +125,10 @@ class LoadTranslations extends Command
                         'translation_source' => 'manual',
                         'translated_at' => now(),
                         'needs_review' => false,
+                        // Somebody sat down and decided what this word means,
+                        // which is a stronger signal than a missing Wiktionary
+                        // gloss. "went" and "cat" get taught because of this.
+                        'is_teachable' => true,
                     ])->saveQuietly();
                 }
 

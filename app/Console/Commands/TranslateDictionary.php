@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Word;
-use App\Services\Dictionary\Providers\ClaudeTranslator;
+use App\Services\Dictionary\Contracts\Translator;
 use Illuminate\Console\Command;
 use Throwable;
 
@@ -24,11 +24,12 @@ class TranslateDictionary extends Command
         {--ranked : Only words that appear in the frequency list at all}
         {--retry : Include words that failed on an earlier run}
         {--word=* : Translate these words specifically, ignoring the queue}
+        {--lang=uz : Languages to fill, comma separated (uz,ru)}
         {--dry : Show what would be sent, call nothing}';
 
     protected $description = 'Translate pending dictionary words into Uzbek with Claude';
 
-    public function handle(ClaudeTranslator $translator): int
+    public function handle(Translator $translator): int
     {
         $words = $this->queue();
 
@@ -38,14 +39,18 @@ class TranslateDictionary extends Command
             return self::SUCCESS;
         }
 
-        $size = (int) config('dictionary.claude.batch_size');
+        $locales = array_values(array_filter(array_map('trim', explode(',', $this->option('lang')))));
+        $driver = config('dictionary.translator');
+        $size = (int) config("dictionary.{$driver}.batch_size", 40);
         $chunks = $words->chunk($size);
 
         $this->info(sprintf(
-            '%s ta soʼz · %s soʼrov · model: %s',
+            '%s ta soʼz · %s soʼrov · %s (%s) · tillar: %s',
             number_format($words->count()),
             number_format($chunks->count()),
-            config('dictionary.claude.model'),
+            $translator->name(),
+            config("dictionary.{$driver}.model"),
+            implode(', ', $locales),
         ));
 
         if ($this->option('dry')) {
@@ -66,9 +71,9 @@ class TranslateDictionary extends Command
                     'pos' => $w->part_of_speech,
                     'gloss' => $w->definition['en'] ?? null,
                     'example' => $w->example['en'] ?? null,
-                ])->values()->all());
+                ])->values()->all(), $locales);
 
-                [$ok, $blank] = $this->store($chunk, $result);
+                [$ok, $blank] = $this->store($chunk, $result, $locales, $translator->name());
                 $done += $ok;
                 $missed += $blank;
             } catch (Throwable $e) {
@@ -79,6 +84,10 @@ class TranslateDictionary extends Command
             }
 
             $bar->advance();
+
+            if ($delay = (int) config("dictionary.{$driver}.delay_ms")) {
+                usleep($delay * 1000);
+            }
         }
 
         $bar->finish();
@@ -94,6 +103,12 @@ class TranslateDictionary extends Command
 
         $left = Word::where('translation_status', 'pending')->count();
         $this->line('   qolgan: '.number_format($left));
+
+        foreach ($locales as $locale) {
+            $this->line(sprintf('   %s tarjimasi bor: %s', $locale, number_format(
+                Word::whereNotNull('translations->'.$locale)->count(),
+            )));
+        }
 
         return self::SUCCESS;
     }
@@ -126,14 +141,14 @@ class TranslateDictionary extends Command
      * @param  array<string, list<string>>  $result
      * @return array{0: int, 1: int} translated, left blank
      */
-    protected function store($chunk, array $result): array
+    protected function store($chunk, array $result, array $locales, string $source): array
     {
         $done = $blank = 0;
 
         foreach ($chunk as $word) {
-            $uz = $result[$word->word] ?? [];
+            $byLocale = $result[$word->word] ?? [];
 
-            if ($uz === []) {
+            if ($byLocale === []) {
                 // Claude saw it and had nothing — not a transport failure, so
                 // it is parked rather than retried forever.
                 $word->forceFill([
@@ -146,12 +161,15 @@ class TranslateDictionary extends Command
             }
 
             $translations = $word->translations ?? [];
-            $translations['uz'] = $uz;
+
+            foreach ($byLocale as $locale => $forms) {
+                $translations[$locale] = $forms;
+            }
 
             $word->forceFill([
                 'translations' => $translations,
                 'translation_status' => 'done',
-                'translation_source' => 'claude',
+                'translation_source' => $source,
                 'translated_at' => now(),
                 'translation_attempts' => $word->translation_attempts + 1,
                 'needs_review' => false,

@@ -3,6 +3,7 @@
 namespace App\Services\Dictionary\Providers;
 
 use Anthropic\Client;
+use App\Services\Dictionary\Contracts\Translator;
 use RuntimeException;
 
 /**
@@ -19,21 +20,30 @@ use RuntimeException;
  * words themselves — one word per request would spend most of the budget
  * repeating the prompt.
  */
-class ClaudeTranslator
+class ClaudeTranslator implements Translator
 {
+    public function name(): string
+    {
+        return 'claude';
+    }
+
     public function __construct(protected ?Client $client = null) {}
 
     /**
      * @param  list<array{word: string, pos: ?string, gloss: ?string, example: ?string}>  $words
      * @return array<string, list<string>> word => Uzbek forms, best first
      */
-    public function translate(array $words): array
+    public function translate(array $words, array $locales = ['uz']): array
     {
         if ($words === []) {
             return [];
         }
 
-        return $this->parse($this->send($words), $words);
+        // This provider was written for Uzbek only; the shape is widened to
+        // match the interface so either engine can be dropped in.
+        $flat = $this->parse($this->send($words), $words);
+
+        return array_map(fn (array $forms) => ['uz' => $forms], $flat);
     }
 
     /**

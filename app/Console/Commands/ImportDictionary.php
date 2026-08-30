@@ -111,7 +111,7 @@ class ImportDictionary extends Command
                 'cefr_level' => $this->level($position),
                 'frequency_rank' => $position,
                 'source' => 'import',
-                'is_teachable' => $this->teachable($word, $entry['p'] ?? null),
+                'is_teachable' => $this->teachable($word, $entry['p'] ?? null, $entry['g'] ?? null),
                 // Wiktionary's own Uzbek is human-written, so it is finished.
                 'translation_status' => $uz ? 'done' : 'pending',
                 'translation_source' => $uz ? 'wiktionary' : null,
@@ -175,16 +175,32 @@ class ImportDictionary extends Command
      * nothing — its dictionary entry reads "with a comparative, establishes a
      * correlation". Grammar words stay searchable but are never dealt out.
      */
-    protected function teachable(string $word, ?string $pos): bool
+    protected function teachable(string $word, ?string $pos, ?string $gloss): bool
     {
         static $skip = null;
         $skip ??= array_flip(config('dictionary.seed.skip_words', []));
 
-        if (isset($skip[$word]) || mb_strlen($word) < 2) {
+        if (isset($skip[$word]) || mb_strlen($word) <= 2) {
             return false;
         }
 
-        return in_array($pos, config('dictionary.seed.keep_pos', []), true);
+        if (! in_array($pos, config('dictionary.seed.keep_pos', []), true)) {
+            return false;
+        }
+
+        // Without a definition there is nothing to translate *from*, and the
+        // words in that state are the ones worth skipping anyway: inflected
+        // forms ("went", "made"), stage directions ("sighs", "groans"),
+        // letters and abbreviations. They stay searchable — a teacher typing
+        // "went" still finds it — but they are never dealt out, and a human
+        // writing a translation by hand puts one back (see
+        // dictionary:load-translations).
+        if (blank($gloss)) {
+            return false;
+        }
+
+        // "em", "ya", "de" — the entry is about the letter, not a word.
+        return ! preg_match('/^the name of the .*(letter|script)/i', $gloss);
     }
 
     /** word => 1-based position in the frequency list. */
