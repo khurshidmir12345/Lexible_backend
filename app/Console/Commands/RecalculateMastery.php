@@ -58,13 +58,26 @@ class RecalculateMastery extends Command
         // Exam nodes keep the accuracy of the attempt that passed them — they
         // have no vocabulary, so refreshing would zero them out.
         $stages = 0;
-        Category::where('type', '!=', 'exam')->chunkById(200, function ($categories) use ($road, &$stages) {
+        $completed = 0;
+        Category::where('type', '!=', 'exam')->chunkById(200, function ($categories) use ($road, &$stages, &$completed) {
             foreach ($categories as $category) {
                 $road->refreshProgress($category);
                 $stages++;
+
+                // The rescored numbers may put a stage over the finish line;
+                // normally the end of a round checks this, so the backfill
+                // has to as well or the road stays stuck at 100%.
+                $category->refresh();
+
+                if ($category->status === 'in_progress'
+                    && $category->progress >= config('game.mastery.learned_at')
+                    && $category->words_count >= config('game.road.min_words_to_complete')) {
+                    $road->complete($category);
+                    $completed++;
+                }
             }
         });
-        $this->info("Bosqichlar yangilandi: {$stages}");
+        $this->info("Bosqichlar yangilandi: {$stages}, yopildi: {$completed}");
 
         User::query()->chunkById(200, function ($users) {
             foreach ($users as $user) {
