@@ -62,7 +62,10 @@ return [
         'key' => env('ANTHROPIC_API_KEY'),
         'model' => env('DICT_CLAUDE_MODEL', 'claude-opus-5'),
         'max_tokens' => 8000,
-        'batch_size' => 40,          // words per request
+        // The daily allowance is counted in *requests*, not words, so this is
+        // what decides whether the dictionary takes a week or a month. 100
+        // entries produce roughly 3k output tokens against an 8k ceiling.
+        'batch_size' => 100,
         'max_attempts' => 3,         // before a word is parked as failed
     ],
 
@@ -83,7 +86,10 @@ return [
         'model' => env('DICT_GEMINI_MODEL', 'gemini-3.5-flash-lite'),
         'max_tokens' => 8192,
         'timeout' => 120,
-        'batch_size' => 40,          // words per request
+        // The daily allowance is counted in *requests*, not words, so this is
+        // what decides whether the dictionary takes a week or a month. 100
+        // entries produce roughly 3k output tokens against an 8k ceiling.
+        'batch_size' => 100,
         'retries' => 5,
         'backoff_ms' => 3000,        // multiplied by the attempt number
         'delay_ms' => 500,           // pause between batches, to stay under the quota

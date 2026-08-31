@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Word;
 use App\Services\Dictionary\Contracts\Translator;
 use Illuminate\Console\Command;
+use App\Services\Dictionary\Exceptions\QuotaExhausted;
 use Throwable;
 
 /**
@@ -63,6 +64,7 @@ class TranslateDictionary extends Command
         $bar->start();
 
         $done = $missed = $failed = 0;
+        $stopped = false;
 
         foreach ($chunks as $chunk) {
             try {
@@ -76,6 +78,15 @@ class TranslateDictionary extends Command
                 [$ok, $blank] = $this->store($chunk, $result, $locales, $translator->name());
                 $done += $ok;
                 $missed += $blank;
+            } catch (QuotaExhausted $e) {
+                // Nothing left to spend today. The words stay `pending` rather
+                // than `failed`, so tomorrow's run treats them as untouched
+                // instead of as words that could not be translated.
+                $this->newLine(2);
+                $this->warn('⏸  '.$e->getMessage());
+                $stopped = true;
+
+                break;
             } catch (Throwable $e) {
                 $failed += $chunk->count();
                 $this->markFailed($chunk, $e->getMessage());
@@ -90,8 +101,10 @@ class TranslateDictionary extends Command
             }
         }
 
-        $bar->finish();
-        $this->newLine(2);
+        if (! $stopped) {
+            $bar->finish();
+            $this->newLine(2);
+        }
 
         $this->info("✅ {$done} ta tarjima qilindi");
         if ($missed) {

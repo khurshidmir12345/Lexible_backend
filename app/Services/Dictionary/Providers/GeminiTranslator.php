@@ -3,6 +3,7 @@
 namespace App\Services\Dictionary\Providers;
 
 use App\Services\Dictionary\Contracts\Translator;
+use App\Services\Dictionary\Exceptions\QuotaExhausted;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -97,8 +98,18 @@ class GeminiTranslator implements Translator
             );
 
         if ($response->failed()) {
+            $body = $response->body();
+
+            // "PerDay" in the quota id is the difference between "wait a
+            // moment" and "come back tomorrow".
+            if ($response->status() === 429 && str_contains($body, 'PerDay')) {
+                throw new QuotaExhausted(
+                    'Kunlik kvota tugadi — ertaga davom etadi. '.$this->quotaLine($body),
+                );
+            }
+
             throw new RuntimeException(
-                'Gemini '.$response->status().': '.mb_substr($response->body(), 0, 200),
+                'Gemini '.$response->status().': '.mb_substr($body, 0, 300),
             );
         }
 
@@ -114,13 +125,31 @@ class GeminiTranslator implements Translator
             $text .= $part['text'] ?? '';
         }
 
-        if (trim($text) === '') {
-            $reason = $body['candidates'][0]['finishReason'] ?? '?';
+        $reason = $body['candidates'][0]['finishReason'] ?? null;
 
+        if (trim($text) === '') {
             throw new RuntimeException("Gemini boʼsh javob qaytardi (finishReason: {$reason})");
         }
 
+        // A reply cut off at the token ceiling still parses as JSON, just with
+        // the last words missing — so it has to be rejected here rather than
+        // silently losing half a batch.
+        if ($reason === 'MAX_TOKENS') {
+            throw new RuntimeException(
+                'Gemini javobi chegaraga yetdi — batch_size ni kamaytiring '
+                .'(hozir '.count($words).' ta soʼz).',
+            );
+        }
+
         return $text;
+    }
+
+    /** Pulls "limit: 500, model: …" out of the error, for the log. */
+    protected function quotaLine(string $body): string
+    {
+        preg_match('/limit: \d+[^\n"]*/', $body, $m);
+
+        return $m[0] ?? '';
     }
 
     /** @param list<string> $locales */
