@@ -32,8 +32,8 @@ class PlayerResolver
 
         if ($isNew) {
             $user->chat_id ??= $tgUser['id'];
-            // Telegram's own language is the best first guess; onboarding confirms it.
-            $user->native_lang = $this->supportedLocale($tgUser['language_code'] ?? null);
+            // Uzbek is the default whatever Telegram's own language says —
+            // onboarding opens with UZ picked and lets the player change it.
             $this->applyStartPayload($user, $startPayload);
         }
 
@@ -77,10 +77,4 @@ class PlayerResolver
         }
     }
 
-    protected function supportedLocale(?string $code): string
-    {
-        $code = Str::lower(Str::before((string) $code, '-'));
-
-        return in_array($code, config('app.supported_locales', ['uz', 'ru', 'en']), true) ? $code : 'uz';
-    }
 }

@@ -7,28 +7,20 @@ use App\Models\Category;
 use App\Models\Word;
 use App\Models\WordProgress;
 use App\Services\Game\RoadMapService;
-use App\Services\Game\WordPicker;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class CategoryController extends Controller
 {
-    public function show(Request $request, Category $category, WordPicker $picker): array
+    public function show(Request $request, Category $category): array
     {
         $this->authorizeOwner($request, $category);
 
         $category->loadMissing(['group.teacher', 'pathStage']);
 
-        // A stage arrives pre-filled: the player asked for N words a day during
-        // onboarding, so that is what a stage is. They can still add their own.
-        // A teacher's stage is never touched — an empty one is a lesson that
-        // has not been written yet, not an invitation to pick random words.
-        $filled = $category->isFromGroup() ? 0 : $picker->fill($category);
-
-        if ($filled > 0) {
-            $category->refresh();
-        }
-
+        // A stage starts empty on purpose: the player names it, then searches
+        // the dictionary and picks every word themselves. Nothing is ever
+        // pre-filled — neither here nor in a teacher's stage.
         $words = $category->words()->get();
 
         // One query for the whole category rather than one per word.
@@ -81,7 +73,6 @@ class CategoryController extends Controller
                 ];
             })->values(),
             'mastery_by_type' => $this->masteryByType($progress),
-            'auto_filled' => $filled,
         ];
     }
 

@@ -44,7 +44,14 @@ class WordProgress extends Model
     /** Recompute the average shown on the word row and the learned flag. */
     public function recalculate(): void
     {
-        $this->overall = (int) round(array_sum($this->mastery()) / count(self::DIMENSIONS));
+        // Each exercise type is scored out of 100 on its own, so the overall
+        // averages only the exercises actually practised. Dividing by all six
+        // capped a word played in one game type at 16% forever.
+        $practised = array_filter($this->mastery(), fn (int $value) => $value > 0);
+
+        $this->overall = $practised === []
+            ? 0
+            : (int) round(array_sum($practised) / count($practised));
         $this->is_learned = $this->overall >= config('game.mastery.learned_at', 70);
     }
 }
