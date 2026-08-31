@@ -60,6 +60,15 @@ class RecalculateMastery extends Command
         });
         $this->info('Oʼrganilgan-soʼz hisoblagichlari tekshirildi.');
 
+        // Accounts created before the UZ-default fix carried Telegram's
+        // language guess. Anyone who has not confirmed a language through
+        // onboarding is moved onto the default they will now be shown.
+        $moved = User::where('onboarded', false)
+            ->where('role', 'student')
+            ->where('native_lang', '!=', 'uz')
+            ->update(['native_lang' => 'uz']);
+        $this->info("Til UZ ga oʼtkazildi: {$moved}");
+
         return self::SUCCESS;
     }
 }
