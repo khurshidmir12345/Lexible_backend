@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Category;
+use App\Models\TestAnswer;
 use App\Models\User;
 use App\Models\WordProgress;
 use App\Services\Game\RoadMapService;
@@ -26,8 +27,24 @@ class RecalculateMastery extends Command
     public function handle(RoadMapService $road): int
     {
         $words = 0;
-        WordProgress::chunkById(500, function ($rows) use (&$words) {
+        WordProgress::chunkById(200, function ($rows) use (&$words) {
             foreach ($rows as $progress) {
+                // Scores written under the old +20-per-answer scale can't be
+                // mapped onto pass/fail, but the answer log can: the last
+                // answer in each exercise type decides, exactly as it now
+                // does live. Types never answered are left untouched.
+                $lastByType = TestAnswer::where('user_id', $progress->user_id)
+                    ->where('word_id', $progress->word_id)
+                    ->orderBy('id')
+                    ->get(['type', 'is_correct'])
+                    ->groupBy('type');
+
+                foreach (WordProgress::DIMENSIONS as $dimension) {
+                    if ($answers = $lastByType->get($dimension)) {
+                        $progress->{'m_'.$dimension} = $answers->last()->is_correct ? 100 : 0;
+                    }
+                }
+
                 $progress->recalculate();
 
                 if ($progress->isDirty()) {

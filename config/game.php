@@ -29,8 +29,12 @@ return [
     'mastery' => [
         'learned_at' => 70,          // green threshold, also "weak word" cutoff
         'mid_at' => 40,              // amber threshold
-        'gain_on_correct' => 20,
-        'loss_on_wrong' => 15,
+
+        // Each exercise type is pass/fail: the last answer decides. A correct
+        // answer takes the dimension straight to 100, a miss straight back to
+        // 0 — one clean round through a game type reads 100%, not 20%.
+        'gain_on_correct' => 100,
+        'loss_on_wrong' => 100,
         'max' => 100,
     ],
 
