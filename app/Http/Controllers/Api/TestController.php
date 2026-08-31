@@ -122,15 +122,29 @@ class TestController extends Controller
         $isCorrect = $this->builder->isCorrect($question, $given);
 
         if ($question['type'] === 'match') {
-            // A matching round covers several words at once, so mastery is
-            // recorded per pair rather than for the round as a whole.
-            $this->recordMatchPairs($session, $question, $given, $data['response_ms'] ?? 0);
-        } elseif (($question['word_id'] ?? null) !== null) {
-            $this->mastery->record($session, $question, $given, $isCorrect, $data['response_ms'] ?? 0);
-        }
+            // A matching round covers several words at once, so everything —
+            // mastery AND the session score — counts per pair. Grading the
+            // whole round as one all-or-nothing question made one slip read
+            // as "0/1, 0% accuracy" while every other pair was right.
+            [$right, $wrong] = $this->recordMatchPairs($session, $question, $given, $data['response_ms'] ?? 0);
 
-        $session->increment('answered_count');
-        $session->increment($isCorrect ? 'correct_count' : 'wrong_count');
+            if ($right + $wrong > 0) {
+                $session->increment('answered_count', $right + $wrong);
+            }
+            if ($right > 0) {
+                $session->increment('correct_count', $right);
+            }
+            if ($wrong > 0) {
+                $session->increment('wrong_count', $wrong);
+            }
+        } else {
+            if (($question['word_id'] ?? null) !== null) {
+                $this->mastery->record($session, $question, $given, $isCorrect, $data['response_ms'] ?? 0);
+            }
+
+            $session->increment('answered_count');
+            $session->increment($isCorrect ? 'correct_count' : 'wrong_count');
+        }
 
         return [
             'correct' => $isCorrect,
@@ -205,15 +219,19 @@ class TestController extends Controller
     /**
      * The client reports how each pair went: [{"word_id": 4, "correct": true}].
      * Anything not reported is treated as unanswered and ignored.
+     *
+     * @return array{0: int, 1: int} how many pairs were right and wrong
      */
-    protected function recordMatchPairs(TestSession $session, array $question, mixed $given, int $responseMs): void
+    protected function recordMatchPairs(TestSession $session, array $question, mixed $given, int $responseMs): array
     {
         if (! is_array($given)) {
-            return;
+            return [0, 0];
         }
 
         $allowed = collect($question['pairs'] ?? [])->pluck('word_id')->flip();
         $count = max(count($given), 1);
+        $right = 0;
+        $wrong = 0;
 
         foreach ($given as $pair) {
             $wordId = $pair['word_id'] ?? null;
@@ -222,14 +240,19 @@ class TestController extends Controller
                 continue;   // not part of this round — ignore it
             }
 
+            $isRight = (bool) ($pair['correct'] ?? false);
+            $isRight ? $right++ : $wrong++;
+
             $this->mastery->record(
                 $session,
                 ['type' => 'match', 'word_id' => $wordId],
                 null,
-                (bool) ($pair['correct'] ?? false),
+                $isRight,
                 (int) round($responseMs / $count),
             );
         }
+
+        return [$right, $wrong];
     }
 
     /**
