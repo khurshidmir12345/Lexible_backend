@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\TestAnswer;
 use App\Models\Word;
 use App\Models\WordProgress;
 use App\Services\Game\RoadMapService;
@@ -29,6 +30,18 @@ class CategoryController extends Controller
             ->get()
             ->keyBy('word_id');
 
+        // The last answer per word and exercise type decides its state: the
+        // word row shows a tick for a type answered right, a cross for one
+        // answered wrong, and nothing for a type never played.
+        $states = [];
+        TestAnswer::where('user_id', $request->user()->id)
+            ->whereIn('word_id', $words->pluck('id'))
+            ->orderBy('id')
+            ->get(['word_id', 'type', 'is_correct'])
+            ->each(function (TestAnswer $answer) use (&$states) {
+                $states[$answer->word_id][$answer->type] = (bool) $answer->is_correct;
+            });
+
         $locale = $request->user()->native_lang;
 
         return [
@@ -53,8 +66,9 @@ class CategoryController extends Controller
                     'teacher' => $category->group->teacher?->full_name,
                 ] : null,
             ],
-            'words' => $words->map(function (Word $word) use ($progress, $locale) {
+            'words' => $words->map(function (Word $word) use ($progress, $states, $locale) {
                 $p = $progress[$word->id] ?? null;
+                $wordStates = $states[$word->id] ?? [];
 
                 return [
                     'id' => $word->id,
@@ -69,10 +83,18 @@ class CategoryController extends Controller
                     'example' => $word->example['en'] ?? null,
                     'example_translation' => $word->example[$locale] ?? null,
                     'mastery' => $p ? $p->mastery() : array_fill_keys(WordProgress::DIMENSIONS, 0),
+                    // correct | wrong | null (never played) per exercise type.
+                    'answers' => collect(WordProgress::DIMENSIONS)
+                        ->mapWithKeys(fn (string $d) => [
+                            $d => array_key_exists($d, $wordStates)
+                                ? ($wordStates[$d] ? 'correct' : 'wrong')
+                                : null,
+                        ])
+                        ->all(),
                     'overall' => $p?->overall ?? 0,
                 ];
             })->values(),
-            'mastery_by_type' => $this->masteryByType($progress),
+            'mastery_by_type' => $this->masteryByType($states),
         ];
     }
 
@@ -121,15 +143,23 @@ class CategoryController extends Controller
         return ['words_count' => $category->fresh()->words_count];
     }
 
-    /** Which exercises are weak across the whole category. */
-    protected function masteryByType($progress): array
+    /**
+     * Which exercises are weak across the whole category. Each type averages
+     * only the words actually played in it — words a type has not asked yet
+     * would otherwise drag a clean 100% down for no fault of the player's.
+     *
+     * @param  array<int, array<string, bool>>  $states  last answer per word and type
+     */
+    protected function masteryByType(array $states): array
     {
         return collect(WordProgress::DIMENSIONS)
-            ->mapWithKeys(fn (string $dimension) => [
-                $dimension => $progress->isEmpty()
-                    ? 0
-                    : (int) round($progress->avg('m_'.$dimension)),
-            ])
+            ->mapWithKeys(function (string $dimension) use ($states) {
+                $played = collect($states)
+                    ->filter(fn (array $types) => array_key_exists($dimension, $types))
+                    ->map(fn (array $types) => $types[$dimension] ? 100 : 0);
+
+                return [$dimension => $played->isEmpty() ? 0 : (int) round($played->avg())];
+            })
             ->all();
     }
 
