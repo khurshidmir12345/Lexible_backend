@@ -13,11 +13,23 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PathController extends Controller
 {
+    /** A path is born with a full road: this many stages, waiting to be filled. */
+    protected const INITIAL_STAGES = 10;
+
     public function index(Request $request): array
     {
         $this->authorizeTeacher($request);
 
         $paths = $request->user()->paths()->with('stages')->withCount('groups')->get();
+
+        // Older paths were built one stage at a time; the map now comes
+        // pre-drawn, so short paths are quietly topped up to the full road.
+        foreach ($paths as $path) {
+            if ($path->stages->count() < self::INITIAL_STAGES) {
+                $this->seedStages($path, self::INITIAL_STAGES - $path->stages->count());
+                $path->load('stages');
+            }
+        }
 
         return [
             'paths' => $paths->map(fn (Path $path) => [
@@ -51,7 +63,22 @@ class PathController extends Controller
 
         $path = $request->user()->paths()->create($data)->fresh();
 
+        // The whole road appears at once — the teacher fills stage 1 and the
+        // next card unlocks, instead of the map forming one node at a time.
+        $this->seedStages($path, self::INITIAL_STAGES);
+
         return ['path' => ['id' => $path->id, 'title' => $path->title, 'subtitle' => $path->subtitle]];
+    }
+
+    protected function seedStages(Path $path, int $count): void
+    {
+        $position = (int) $path->stages()->max('position');
+
+        for ($i = 0; $i < $count; $i++) {
+            $path->stages()->create(['position' => ++$position, 'type' => 'normal']);
+        }
+
+        $path->refreshStagesCount();
     }
 
     public function update(Request $request, Path $path): array
@@ -151,10 +178,24 @@ class PathController extends Controller
             $stage->update($patch);
         }
 
-        // Classes already holding this stage get the new words straight away.
+        // Classes already holding this stage get the new words straight away,
+        // and a stage that just got its first words reaches students who were
+        // materialised before it was written.
         $this->syncToClasses($stage);
+        $this->handDownNewStages($stage);
 
         return ['stage' => $this->present($stage->fresh())];
+    }
+
+    protected function handDownNewStages(PathStage $stage): void
+    {
+        $groups = app(\App\Services\Teaching\GroupService::class);
+
+        foreach ($stage->path->groups()->with('students')->get() as $group) {
+            foreach ($group->students as $student) {
+                $groups->materialise($group, $student);
+            }
+        }
     }
 
     /**

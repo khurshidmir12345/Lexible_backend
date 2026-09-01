@@ -106,8 +106,17 @@ class GroupService
 
         $offset = (int) Category::where('user_id', $student->id)->max('position');
         $created = 0;
+        $index = -1;
 
-        foreach ($path->stages()->with('words')->get() as $index => $stage) {
+        foreach ($path->stages()->with('words')->orderBy('position')->get() as $stage) {
+            // The teacher's map is pre-drawn with empty stages; students only
+            // receive a stage once its lesson is actually written.
+            if ($stage->words->isEmpty()) {
+                continue;
+            }
+
+            $index++;
+
             $exists = Category::where('user_id', $student->id)
                 ->where('path_stage_id', $stage->id)
                 ->exists();
