@@ -47,7 +47,7 @@ class UpdateHandler
         app()->setLocale($user->native_lang);
 
         match ($command) {
-            '/start' => $this->sendWelcome($user),
+            '/start' => $this->sendWelcome($user, $payload),
             '/play' => $this->sendPlay($user),
             '/stats', '/profile' => $this->sendStats($user),
             '/invite' => $this->sendInvite($user),
@@ -78,14 +78,14 @@ class UpdateHandler
 
     // ----------------------------------------------------------------- replies
 
-    protected function sendWelcome(User $user): void
+    protected function sendWelcome(User $user, ?string $payload = null): void
     {
         $name = e($user->first_name ?: 'do\'stim');
 
         $this->telegram->sendMessage(
             $user->chat_id,
             Setting::get('bot.welcome') ?? $this->defaultWelcome($name),
-            ['reply_markup' => $this->playKeyboard()],
+            ['reply_markup' => $this->playKeyboard($payload)],
         );
     }
 
@@ -154,11 +154,24 @@ class UpdateHandler
 
     // ----------------------------------------------------------------- helpers
 
-    protected function playKeyboard(): array
+    protected function playKeyboard(?string $startParam = null): array
     {
+        $url = config('telegram.mini_app.url');
+        $label = "🎮 O'ynash";
+
+        // A duel or class-game invite that arrived as a plain /start deep
+        // link still lands inside the game: the button URL carries the code,
+        // and the app reads it when Telegram's own start_param is absent.
+        if ($startParam && preg_match('/^(duel|comp)_[A-Za-z0-9]+$/', $startParam)) {
+            $url .= (str_contains($url, '?') ? '&' : '?').'startapp='.$startParam;
+            $label = str_starts_with($startParam, 'duel_')
+                ? "⚔️ Duelga qo'shilish"
+                : "🏆 Bellashuvga qo'shilish";
+        }
+
         return ['inline_keyboard' => [[[
-            'text' => "🎮 O'ynash",
-            'web_app' => ['url' => config('telegram.mini_app.url')],
+            'text' => $label,
+            'web_app' => ['url' => $url],
         ]]]];
     }
 
