@@ -78,6 +78,7 @@ Route::middleware('miniapp')->group(function () {
         Route::patch('/paths/{path}', [PathController::class, 'update']);
         Route::delete('/paths/{path}', [PathController::class, 'destroy']);
         Route::post('/paths/{path}/stages', [PathController::class, 'addStage']);
+        Route::get('/words/random', [PathController::class, 'randomWords']);
         Route::get('/stages/{stage}', [PathController::class, 'showStage']);
         Route::patch('/stages/{stage}', [PathController::class, 'updateStage']);
         Route::delete('/stages/{stage}', [PathController::class, 'destroyStage']);

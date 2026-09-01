@@ -7,9 +7,8 @@ use App\Models\Category;
 use App\Models\Path;
 use App\Models\PathStage;
 use App\Models\Word;
-use App\Services\Dictionary\DictionaryService;
-use App\Services\Dictionary\EmojiMatcher;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
 class PathController extends Controller
@@ -117,65 +116,26 @@ class PathController extends Controller
     }
 
     /**
-     * The teacher types the word and its translation. A word already in the
-     * shared dictionary is reused; anything new is created from what they
-     * typed, so a class is never blocked by a gap in the dictionary.
+     * A stage's vocabulary is picked from the shared dictionary — the teacher
+     * searches or takes a random batch, never types pairs by hand. There is
+     * no cap: a stage holds as many words as the lesson needs.
      */
-    public function updateStage(
-        Request $request,
-        PathStage $stage,
-        DictionaryService $dictionary,
-        EmojiMatcher $emojis,
-    ): array
+    public function updateStage(Request $request, PathStage $stage): array
     {
         $this->authorizeOwner($request, $stage->path);
-
-        $max = config('game.teaching.max_words_per_stage');
 
         $data = $request->validate([
             'title' => ['nullable', 'string', 'max:60'],
             'type' => ['sometimes', 'in:normal,exam'],
-            'words' => ['required', 'array', 'max:'.$max],
-            'words.*.en' => ['required', 'string', 'max:60'],
-            'words.*.translation' => ['required', 'string', 'max:120'],
+            'words' => ['required', 'array'],
+            'words.*' => ['integer', 'exists:words,id'],
         ]);
 
-        $locale = $request->user()->native_lang;
-        $ids = [];
-
-        foreach ($data['words'] as $index => $row) {
-            $word = $dictionary->find($row['en']) ?? $dictionary->import($row['en']);
-
-            if (! $word) {
-                $word = Word::create([
-                    'word' => trim($row['en']),
-                    'source' => 'manual',
-                    'needs_review' => true,
-                ]);
-            }
-
-            // Without a picture the word can never be asked as a picture
-            // question, so a hand-typed lesson would quietly lose one of the
-            // six exercises.
-            if (blank($word->emoji) && blank($word->icon_path)) {
-                if ($emoji = $emojis->match($word->word, $word->part_of_speech)) {
-                    $word->update(['emoji' => $emoji]);
-                }
-            }
-
-            // The teacher's wording wins for their own class.
-            $translations = $word->translations ?? [];
-            $existing = $translations[$locale] ?? [];
-            $existing = is_array($existing) ? $existing : [$existing];
-
-            if (! in_array($row['translation'], $existing, true)) {
-                array_unshift($existing, trim($row['translation']));
-                $translations[$locale] = array_values(array_unique($existing));
-                $word->update(['translations' => $translations]);
-            }
-
-            $ids[$word->id] = ['sort_order' => $index];
-        }
+        $ids = collect($data['words'])
+            ->unique()
+            ->values()
+            ->mapWithKeys(fn (int $id, int $index) => [$id => ['sort_order' => $index]])
+            ->all();
 
         $stage->words()->sync($ids);
         $stage->refreshWordsCount();
@@ -195,6 +155,55 @@ class PathController extends Controller
         $this->syncToClasses($stage);
 
         return ['stage' => $this->present($stage->fresh())];
+    }
+
+    /**
+     * A random batch for the stage editor: the teacher names a level and a
+     * count, the dictionary answers. Words at the exact CEFR level first;
+     * common words (by frequency) top the batch up when the level runs dry.
+     */
+    public function randomWords(Request $request): array
+    {
+        $this->authorizeTeacher($request);
+
+        $data = $request->validate([
+            'level' => ['nullable', Rule::in(['A0', 'A1', 'A2', 'B1', 'B2', 'C1'])],
+            'count' => ['required', 'integer', 'min:1', 'max:100'],
+            'exclude' => ['nullable', 'string'],   // comma-separated word ids
+        ]);
+
+        $locale = $request->user()->native_lang;
+        $exclude = collect(explode(',', $data['exclude'] ?? ''))
+            ->filter(fn ($v) => is_numeric($v))
+            ->map(fn ($v) => (int) $v);
+
+        $base = fn () => Word::usable($locale)->whereNotIn('id', $exclude);
+
+        $atLevel = ! empty($data['level'])
+            ? $base()->where('cefr_level', $data['level'])->inRandomOrder()->limit($data['count'])->get()
+            : collect();
+
+        $picked = $atLevel;
+
+        if ($picked->count() < $data['count']) {
+            $filler = $base()
+                ->whereNotIn('id', $picked->pluck('id'))
+                ->orderBy('frequency_rank')
+                ->limit(($data['count'] - $picked->count()) * 4)
+                ->get()
+                ->shuffle()
+                ->take($data['count'] - $picked->count());
+
+            $picked = $picked->concat($filler);
+        }
+
+        return [
+            'words' => $picked->values()->map(fn (Word $word) => [
+                'id' => $word->id,
+                'en' => $word->word,
+                'translation' => $word->translation($locale),
+            ]),
+        ];
     }
 
     /**
@@ -257,7 +266,6 @@ class PathController extends Controller
             'title' => $stage->title,
             'type' => $stage->type,
             'path' => ['id' => $stage->path->id, 'title' => $stage->path->title, 'subtitle' => $stage->path->subtitle],
-            'max_words' => config('game.teaching.max_words_per_stage'),
             'words' => $stage->words->map(fn (Word $word) => [
                 'id' => $word->id,
                 'en' => $word->word,
