@@ -121,6 +121,11 @@ class TestController extends Controller
         $given = $data['answer'] ?? null;
         $isCorrect = $this->builder->isCorrect($question, $given);
 
+        // Coins land inside the mastery pipeline (per correct answer, plus a
+        // bonus when a word is fully mastered); the balance delta is what the
+        // client animates, so it is measured around the whole recording.
+        $coinsBefore = (int) $request->user()->coins;
+
         if ($question['type'] === 'match') {
             // A matching round covers several words at once, so everything —
             // mastery AND the session score — counts per pair. Grading the
@@ -146,9 +151,13 @@ class TestController extends Controller
             $session->increment($isCorrect ? 'correct_count' : 'wrong_count');
         }
 
+        $coinsNow = (int) $request->user()->fresh()->coins;
+
         return [
             'correct' => $isCorrect,
             'answer' => $question['answer'] ?? null,   // now safe to reveal
+            'coins_earned' => max(0, $coinsNow - $coinsBefore),
+            'coins' => $coinsNow,
             'word' => [
                 'en' => $question['en'] ?? null,
                 'translation' => $question['translation'] ?? null,
