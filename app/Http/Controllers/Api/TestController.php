@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\TestAnswer;
 use App\Models\TestSession;
 use App\Models\Word;
 use App\Models\WordProgress;
@@ -211,17 +212,51 @@ class TestController extends Controller
             }
         }
 
+        $isExam = $category?->type === 'exam';
+
         return [
             'correct' => $session->correct_count,
             'wrong' => $session->wrong_count,
             'total' => $session->answered_count,
             'accuracy' => $accuracy,
-            'is_exam' => $category?->type === 'exam',
+            'is_exam' => $isExam,
             'exam_passed' => $examPassed,
             'pass_mark' => config('game.exam.pass_mark'),
             'streak_days' => $request->user()->fresh()->streak_days,
             'category_progress' => $category?->fresh()->progress,
             'unlocked_position' => $unlocked?->position,
+        ] + ($isExam ? $this->examBreakdown($request, $session) : []);
+    }
+
+    /**
+     * The per-question autopsy of an exam: which words were asked, in which
+     * exercise, and how each one went — plus totals per exercise type.
+     */
+    protected function examBreakdown(Request $request, TestSession $session): array
+    {
+        $locale = $request->user()->native_lang;
+
+        $rows = TestAnswer::where('test_session_id', $session->id)
+            ->with('word')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (TestAnswer $answer) => [
+                'en' => $answer->word?->word,
+                'translation' => $answer->word?->translation($locale),
+                'type' => $answer->type,
+                'correct' => (bool) $answer->is_correct,
+            ])
+            ->values();
+
+        return [
+            'breakdown' => $rows->all(),
+            'by_type' => $rows
+                ->groupBy('type')
+                ->map(fn ($group) => [
+                    'correct' => $group->where('correct', true)->count(),
+                    'total' => $group->count(),
+                ])
+                ->all(),
         ];
     }
 
