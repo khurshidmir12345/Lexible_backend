@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\RoadController;
 use App\Http\Controllers\Api\TestController;
+use App\Http\Controllers\Api\WordReportController;
 use App\Http\Controllers\Api\WordSearchController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,7 @@ Route::middleware('miniapp')->group(function () {
     Route::get('/road', RoadController::class);
 
     Route::get('/words/search', WordSearchController::class);
+    Route::post('/words/report', WordReportController::class);
     Route::get('/learned', LearnedWordsController::class);
 
     Route::get('/categories/{category}', [CategoryController::class, 'show']);
