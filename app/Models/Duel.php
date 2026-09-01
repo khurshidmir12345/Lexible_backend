@@ -56,6 +56,6 @@ class Duel extends Model
         $bot = ltrim((string) config('telegram.username'), '@');
         $short = config('telegram.mini_app.short_name');
 
-        return "https://t.me/{$bot}/{$short}?startapp=duel_{$this->code}";
+        return "https://telegram.me/{$bot}/{$short}?startapp=duel_{$this->code}";
     }
 }
