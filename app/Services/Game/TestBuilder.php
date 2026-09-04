@@ -44,7 +44,8 @@ class TestBuilder
             'en' => $word->word,
             'translation' => $translation,
             'emoji' => $word->emoji,
-            'icon' => $word->icon_path,
+            'icon' => $word->icon_url,
+            'icon_large' => $word->icon_large_url,
             'pos' => $word->part_of_speech,
             'transcription' => $word->transcription,
             'audio' => $word->audio_url,
@@ -118,7 +119,8 @@ class TestBuilder
             ->map(fn (Word $w) => [
                 'id' => $w->id,
                 'emoji' => $w->emoji,
-                'icon' => $w->icon_path,
+                'icon' => $w->icon_url,
+                'icon_large' => $w->icon_large_url,
                 'label' => $w->translation($locale),
             ])
             ->values();
@@ -197,7 +199,7 @@ class TestBuilder
             'uz2en' => ['en', 'transcription', 'audio'],
             'en2uz' => ['translation'],
             'spell' => ['en', 'transcription', 'audio'],
-            'image' => ['word_id', 'translation', 'emoji', 'icon', 'transcription', 'audio'],
+            'image' => ['word_id', 'translation', 'emoji', 'icon', 'icon_large', 'transcription', 'audio'],
             'match' => [],
         ];
 
@@ -216,6 +218,7 @@ class TestBuilder
                         'key' => $index,
                         'emoji' => $option['emoji'],
                         'icon' => $option['icon'],
+                        'icon_large' => $option['icon_large'] ?? null,
                         'label' => $option['label'],
                     ],
                     $q['options'],

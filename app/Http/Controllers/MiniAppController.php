@@ -25,6 +25,7 @@ class MiniAppController extends Controller
                 'miniAppShortName' => config('telegram.mini_app.short_name'),
                 'languages' => config('app.supported_locales'),
                 'testTypes' => config('game.test_types'),
+                'minWords' => config('game.session.min_words'),
                 'mastery' => config('game.mastery'),
                 'duel' => config('game.duel'),
                 'competition' => config('game.competition'),

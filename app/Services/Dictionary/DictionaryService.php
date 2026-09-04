@@ -22,6 +22,7 @@ class DictionaryService
     public function __construct(
         protected FreeDictionaryProvider $definitions,
         protected MyMemoryTranslator $translator,
+        protected SearchIndex $index,
     ) {}
 
     public function find(string $word): ?Word
@@ -119,25 +120,14 @@ class DictionaryService
         return $word;
     }
 
-    /** Search used by the "add words" screen. */
+    /**
+     * Search used by the "add words" screen: a prefix match on the English
+     * headword or on any translation, served from the flat search index
+     * rather than the JSON column (which took about a second per keystroke).
+     */
     public function search(string $query, string $locale = 'uz', int $limit = 30)
     {
-        $query = trim($query);
-
-        if ($query === '') {
-            return Word::usable($locale)->orderBy('frequency_rank')->limit($limit)->get();
-        }
-
-        $needle = Str::lower($query);
-
-        return Word::usable($locale)
-            ->where(fn ($q) => $q
-                ->where('normalized', 'like', $needle.'%')
-                ->orWhere('translations->'.$locale, 'like', '%'.$needle.'%'))
-            ->orderByRaw('CASE WHEN normalized = ? THEN 0 ELSE 1 END', [$needle])
-            ->orderBy('frequency_rank')
-            ->limit($limit)
-            ->get();
+        return $this->index->search($query, $locale, $limit);
     }
 
     protected function normalize(string $word): string

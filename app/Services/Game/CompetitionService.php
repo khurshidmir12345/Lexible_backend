@@ -42,6 +42,9 @@ class CompetitionService
 
         abort_if($words->isEmpty(), 422, 'Bu bosqichda soʼz yoʼq.');
 
+        $min = (int) config('game.session.min_words');
+        abort_if($words->count() < $min, 422, "Bellashuv uchun bosqichda kamida {$min} ta soʼz kerak.");
+
         $types = $types ?: config('game.competition.types');
 
         // A stale lobby for the same stage would confuse the class, so it is

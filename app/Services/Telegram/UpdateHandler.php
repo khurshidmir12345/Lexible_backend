@@ -4,6 +4,7 @@ namespace App\Services\Telegram;
 
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\MiniAppLink;
 use Illuminate\Support\Str;
 
 /**
@@ -177,10 +178,7 @@ class UpdateHandler
 
     public function referralLink(User $user): string
     {
-        $bot = ltrim((string) config('telegram.username'), '@');
-        $short = config('telegram.mini_app.short_name');
-
-        return "https://telegram.me/{$bot}/{$short}?startapp=ref_{$user->telegram_id}";
+        return MiniAppLink::to("ref_{$user->telegram_id}");
     }
 
     protected function defaultWelcome(string $name): string

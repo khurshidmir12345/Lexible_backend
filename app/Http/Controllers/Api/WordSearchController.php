@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\WordResource;
 use App\Services\Dictionary\DictionaryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class WordSearchController extends Controller
 {
@@ -26,11 +27,15 @@ class WordSearchController extends Controller
 
         $results = $dictionary->search($query, $locale);
 
-        // Nothing stored yet, and it looks like an English word: go and get it.
-        if ($results->isEmpty() && $query !== '' && preg_match('/^[a-zA-Z\- ]{2,40}$/', $query)) {
+        // Nothing stored yet, and it looks like a whole English word: go and
+        // get it — but only once per spelling. Typing "bea", "beau", "beaut"
+        // used to fire three slow dictionary calls that all came back empty.
+        if ($results->isEmpty() && $this->worthLookingUp($query)) {
             if ($imported = $dictionary->lookup($query)) {
                 $dictionary->translate($imported);
                 $results = $dictionary->search($query, $locale);
+            } else {
+                Cache::put($this->missKey($query), true, now()->addHours(6));
             }
         }
 
@@ -38,5 +43,17 @@ class WordSearchController extends Controller
             'words' => WordResource::collection($results)->toArray($request),
             'imported' => $results->isNotEmpty() && $query !== '',
         ];
+    }
+
+    protected function worthLookingUp(string $query): bool
+    {
+        return strlen($query) >= 3
+            && preg_match('/^[a-zA-Z][a-zA-Z\- ]{1,39}$/', $query)
+            && ! Cache::has($this->missKey($query));
+    }
+
+    protected function missKey(string $query): string
+    {
+        return 'dict:miss:'.md5(strtolower($query));
     }
 }

@@ -28,8 +28,9 @@ class DuelController extends Controller
             'types.*' => [Rule::in(config('game.test_types'))],
         ]);
 
-        abort_if($category->words()->count() < 2, Response::HTTP_UNPROCESSABLE_ENTITY,
-            'Duel uchun kamida 2 ta soʼz kerak.');
+        $min = (int) config('game.session.min_words');
+        abort_if($category->words()->count() < $min, Response::HTTP_UNPROCESSABLE_ENTITY,
+            "Duel uchun bosqichda kamida {$min} ta soʼz kerak.");
 
         $duel = $this->duels->create($request->user(), $category, $data['types']);
 
@@ -56,6 +57,14 @@ class DuelController extends Controller
         return ['duel' => $this->duels->state($duel, $request->user())];
     }
 
+    /** The host closes an empty lobby; the invite link dies with it. */
+    public function cancel(Request $request, string $code): array
+    {
+        $duel = $this->duels->cancel($this->find($code), $request->user());
+
+        return ['duel' => $this->duels->state($duel, $request->user())];
+    }
+
     /** Both sides call this to receive their (identical) question list. */
     public function play(Request $request, string $code): array
     {
@@ -63,6 +72,8 @@ class DuelController extends Controller
         $this->authorizeViewer($request, $duel);
 
         abort_if($duel->status === 'waiting', Response::HTTP_CONFLICT, 'Raqib hali qoʼshilmagan.');
+        abort_if($duel->status === 'cancelled', Response::HTTP_GONE, 'Bu duel bekor qilingan.');
+        abort_if($duel->status === 'finished', Response::HTTP_CONFLICT, 'Bu duel tugagan.');
 
         $session = $this->duels->session($duel, $request->user());
 

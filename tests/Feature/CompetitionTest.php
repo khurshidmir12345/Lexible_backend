@@ -114,6 +114,7 @@ class CompetitionTest extends TestCase
             ->assertJsonCount(2, 'competition.students');
 
         $this->assertStringContainsString('startapp=comp_', $response->json('competition.invite_link'));
+        $this->assertMatchesRegularExpression('#^https://t\.me/[A-Za-z0-9_]+\?startapp=comp_#', $response->json('competition.invite_link'));
         $this->assertSame(['absent', 'absent'], collect($response->json('competition.students'))->pluck('status')->all());
     }
 

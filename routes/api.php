@@ -57,6 +57,7 @@ Route::middleware('miniapp')->group(function () {
     Route::post('/duels/{code}/join', [DuelController::class, 'join']);
     Route::post('/duels/{code}/play', [DuelController::class, 'play']);
     Route::post('/duels/{code}/finish', [DuelController::class, 'finish']);
+    Route::delete('/duels/{code}', [DuelController::class, 'cancel']);
 
     // Groups a student belongs to
     Route::post('/groups/join', [GroupJoinController::class, 'join']);

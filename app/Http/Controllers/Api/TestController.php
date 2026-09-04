@@ -49,6 +49,7 @@ class TestController extends Controller
         ]);
 
         $scope = $data['scope'] ?? 'all';
+        $min = (int) config('game.session.min_words');
 
         // An exam ignores the requested types and scope: it is a fixed
         // checkpoint drawn from the stages before it.
@@ -59,6 +60,10 @@ class TestController extends Controller
             abort_if($plan['slices'] === [], Response::HTTP_UNPROCESSABLE_ENTITY,
                 'Imtihon uchun avvalgi bosqichlarda soʼz yoʼq.');
 
+            $pool = collect($plan['slices'])->sum(fn (array $slice) => $slice['words']->count());
+            abort_if($pool < $min, Response::HTTP_UNPROCESSABLE_ENTITY,
+                "Imtihon uchun avvalgi bosqichlarda kamida {$min} ta soʼz kerak.");
+
             $questions = [];
             foreach ($plan['slices'] as $slice) {
                 $questions = array_merge($questions, $this->builder->build(
@@ -66,6 +71,12 @@ class TestController extends Controller
                 ));
             }
         } else {
+            // Multiple choice needs three decoys from the same stage, so a
+            // stage smaller than the minimum cannot produce a round at all.
+            $have = $category->words()->count();
+            abort_if($have < $min, Response::HTTP_UNPROCESSABLE_ENTITY,
+                "Oʼyin uchun kamida {$min} ta soʼz kerak — yana ".($min - $have).' ta qoʼshing.');
+
             $words = $this->wordsFor($request, $category, $scope);
             $types = $data['types'];
 
@@ -317,7 +328,19 @@ class TestController extends Controller
             ->pluck('word_id')
             ->flip();
 
-        return $words->reject(fn (Word $w) => $weak->has($w->id))->values();
+        $still = $words->reject(fn (Word $w) => $weak->has($w->id))->values();
+
+        // Decoys come from the words in the round, so a handful of weak words
+        // is topped up with learned ones from the same stage until a
+        // multiple-choice question can be built.
+        $min = (int) config('game.session.min_words');
+        if ($still->count() < $min) {
+            $still = $still->concat(
+                $words->filter(fn (Word $w) => $weak->has($w->id))->shuffle()->take($min - $still->count()),
+            )->values();
+        }
+
+        return $still;
     }
 
     protected function authorizeOwner(Request $request, Category $category): void

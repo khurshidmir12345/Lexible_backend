@@ -36,7 +36,9 @@ return [
     | Mini App
     |--------------------------------------------------------------------------
     | init_data_ttl: how long (seconds) a signed initData payload stays valid.
-    | short_name:    the /newapp short name, used to build t.me direct links.
+    | short_name:    a /newapp short name, if one is ever registered. Direct
+    |                links do NOT use it — the bot runs a Main Mini App, so
+    |                they are `t.me/<bot>?startapp=...` (see MiniAppLink).
     */
 
     'mini_app' => [

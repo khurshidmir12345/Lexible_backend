@@ -18,7 +18,7 @@ return new class extends Migration
 
             $table->json('types');                              // test types both players take
             $table->json('word_ids');                           // frozen question set — identical for both
-            $table->string('status', 16)->default('waiting');   // waiting | ready | playing | finished | expired
+            $table->string('status', 16)->default('waiting');   // waiting | ready | playing | finished | cancelled
 
             $table->unsignedSmallInteger('host_score')->default(0);
             $table->unsignedSmallInteger('guest_score')->default(0);

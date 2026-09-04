@@ -164,6 +164,12 @@ class PathController extends Controller
             ->mapWithKeys(fn (int $id, int $index) => [$id => ['sort_order' => $index]])
             ->all();
 
+        // Students cannot add to a taught stage, so one too small to play
+        // would be a dead end on their road.
+        $min = (int) config('game.session.min_words');
+        abort_if(count($ids) < $min, Response::HTTP_UNPROCESSABLE_ENTITY,
+            "Bosqichda kamida {$min} ta soʼz boʼlishi kerak.");
+
         $stage->words()->sync($ids);
         $stage->refreshWordsCount();
 
@@ -243,6 +249,9 @@ class PathController extends Controller
                 'id' => $word->id,
                 'en' => $word->word,
                 'translation' => $word->translation($locale),
+                'emoji' => $word->emoji,
+                'icon' => $word->icon_url,
+                'icon_large' => $word->icon_large_url,
             ]),
         ];
     }
@@ -311,6 +320,9 @@ class PathController extends Controller
                 'id' => $word->id,
                 'en' => $word->word,
                 'translation' => $word->translation($locale),
+                'emoji' => $word->emoji,
+                'icon' => $word->icon_url,
+                'icon_large' => $word->icon_large_url,
             ])->values(),
         ];
     }

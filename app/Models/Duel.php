@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\MiniAppLink;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -53,9 +54,6 @@ class Duel extends Model
 
     public function inviteLink(): string
     {
-        $bot = ltrim((string) config('telegram.username'), '@');
-        $short = config('telegram.mini_app.short_name');
-
-        return "https://telegram.me/{$bot}/{$short}?startapp=duel_{$this->code}";
+        return MiniAppLink::to("duel_{$this->code}");
     }
 }

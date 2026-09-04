@@ -57,8 +57,8 @@ class TelegramSetup extends Command
         $this->line(($menu['ok'] ?? false) ? '✅ Menyu tugmasi: '.config('telegram.mini_app.url') : '❌ Menyu: '.($menu['description'] ?? '—'));
 
         $this->newLine();
-        $this->comment('Qoʼlda qilinadigan qadam: @BotFather → /newapp → short name "'.config('telegram.mini_app.short_name').'"');
-        $this->comment('Shundan keyin toʼgʼridan-toʼgʼri havola ishlaydi: https://t.me/'.ltrim((string) config('telegram.username'), '@').'/'.config('telegram.mini_app.short_name'));
+        $this->comment('Qoʼlda qilinadigan qadam: @BotFather → /mybots → Bot Settings → Mini Apps → Enable Mini App (Main Mini App), URL: '.config('telegram.mini_app.url'));
+        $this->comment('Shundan keyin toʼgʼridan-toʼgʼri havola ishlaydi: '.\App\Support\MiniAppLink::to('test').' (startapp qiymati ilova ichida start_param sifatida keladi)');
 
         return self::SUCCESS;
     }

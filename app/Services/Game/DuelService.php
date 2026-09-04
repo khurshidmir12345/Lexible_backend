@@ -51,6 +51,8 @@ class DuelService
 
         abort_if($duel->host_id === $guest->id, 409, 'Oʼzingiz bilan bellasha olmaysiz.');
         abort_if($duel->status === 'finished', 409, 'Bu duel tugagan.');
+        abort_if($duel->status === 'cancelled', 410, 'Bu duel bekor qilingan.');
+        abort_if($duel->status === 'waiting' && $duel->expires_at?->isPast(), 410, 'Bu taklif muddati tugagan.');
 
         if (! $duel->guest_id) {
             $duel->update(['guest_id' => $guest->id, 'status' => 'ready']);
@@ -95,10 +97,41 @@ class DuelService
         ]);
     }
 
-    /** Records one side's finish; resolves the duel once both are in. */
+    /** The host walks out of an empty lobby; the link stops working. */
+    public function cancel(Duel $duel, User $host): Duel
+    {
+        abort_unless($duel->host_id === $host->id, 403);
+
+        if ($duel->status === 'waiting') {
+            $duel->update(['status' => 'cancelled', 'finished_at' => now()]);
+        }
+
+        return $duel->fresh();
+    }
+
+    /**
+     * Records one side's finish; resolves the duel once both are in.
+     *
+     * The score the client sends is only a fallback: the round was played
+     * through an ordinary test session, and that session's own tally is what
+     * counts — so a stalled request or a tampered number cannot change it.
+     */
     public function finish(Duel $duel, User $player, int $score, int $durationMs): Duel
     {
         $isHost = $duel->host_id === $player->id;
+
+        // Finishing twice (a retried request, a reopened app) must not
+        // overwrite the first result.
+        if ($isHost ? $duel->host_finished : $duel->guest_finished) {
+            return $duel->fresh();
+        }
+
+        $session = $this->sessionOf($duel, $player->id);
+
+        if ($session) {
+            $score = (int) $session->correct_count;
+            $durationMs = (int) ($session->duration_ms ?: $durationMs);
+        }
 
         $duel->update($isHost
             ? ['host_score' => $score, 'host_ms' => $durationMs, 'host_finished' => true]
@@ -137,7 +170,13 @@ class DuelService
         return $duel->fresh();
     }
 
-    /** What both clients poll while the duel is in progress. */
+    /**
+     * What both clients poll while the duel is in progress.
+     *
+     * Scores are read live from each player's test session, so the scoreboard
+     * moves answer by answer; the columns on the duel row itself are only
+     * written once a side finishes.
+     */
     public function state(Duel $duel, User $viewer): array
     {
         $duel->loadMissing(['host', 'guest', 'category']);
@@ -146,17 +185,40 @@ class DuelService
         $me = $isHost ? $duel->host : $duel->guest;
         $rival = $isHost ? $duel->guest : $duel->host;
 
+        $sessions = TestSession::where('duel_id', $duel->id)->get()->keyBy('user_id');
+        $questions = count($duel->word_ids) * count($duel->types);
+
+        // A lobby nobody joined in time is reported as expired rather than
+        // left "waiting" forever.
+        $status = $duel->status;
+        if ($status === 'waiting' && $duel->expires_at?->isPast()) {
+            $status = 'expired';
+        }
+
         return [
             'code' => $duel->code,
-            'status' => $duel->status,
+            'status' => $status,
             'category' => $duel->category?->title,
             'types' => $duel->types,
-            'questions' => count($duel->word_ids) * count($duel->types),
+            'questions' => $questions,
             'is_host' => $isHost,
             'invite_link' => $duel->inviteLink(),
-            'me' => $this->side($me, $isHost ? $duel->host_score : $duel->guest_score, $isHost ? $duel->host_finished : $duel->guest_finished),
+            'expires_at' => $duel->expires_at?->toIso8601String(),
+            'me' => $this->side(
+                $me,
+                $sessions->get($me?->id),
+                $isHost ? $duel->host_score : $duel->guest_score,
+                $isHost ? $duel->host_finished : $duel->guest_finished,
+                $questions,
+            ),
             'rival' => $rival
-                ? $this->side($rival, $isHost ? $duel->guest_score : $duel->host_score, $isHost ? $duel->guest_finished : $duel->host_finished)
+                ? $this->side(
+                    $rival,
+                    $sessions->get($rival->id),
+                    $isHost ? $duel->guest_score : $duel->host_score,
+                    $isHost ? $duel->guest_finished : $duel->host_finished,
+                    $questions,
+                )
                 : null,
             'winner' => $duel->winner_id
                 ? ($duel->winner_id === $viewer->id ? 'me' : 'rival')
@@ -165,15 +227,25 @@ class DuelService
         ];
     }
 
-    protected function side(?User $user, ?int $score, ?bool $finished): array
+    protected function side(?User $user, ?TestSession $session, ?int $score, ?bool $finished, int $questions): array
     {
         return [
             'name' => $user?->first_name ?: ($user?->full_name ?? '—'),
             'initial' => $user?->initial ?? '?',
             'photo' => $user?->photo_url,
-            'score' => (int) $score,
+            // Once a side has finished the duel row is authoritative; until
+            // then the session's running tally is the live score.
+            'score' => $finished ? (int) $score : (int) ($session?->correct_count ?? $score),
+            'answered' => (int) ($session?->answered_count ?? 0),
+            'total' => (int) ($session?->questions_count ?: $questions),
+            'started' => $session !== null,
             'finished' => (bool) $finished,
         ];
+    }
+
+    protected function sessionOf(Duel $duel, int $userId): ?TestSession
+    {
+        return TestSession::where('duel_id', $duel->id)->where('user_id', $userId)->first();
     }
 
     /** Short, unambiguous, and easy to read out loud. */

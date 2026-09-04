@@ -14,6 +14,9 @@ return [
 
     'session' => [
         'choice_options' => 4,       // buttons in a multiple-choice question
+        // A round needs the right answer plus three decoys drawn from the
+        // same stage, so anything smaller than this cannot be played.
+        'min_words' => 5,
         'match_pairs' => 6,          // pairs shown in one matching round
         'requeue_wrong' => true,     // a missed word comes back at the end of the queue
     ],

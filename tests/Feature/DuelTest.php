@@ -76,6 +76,7 @@ class DuelTest extends TestCase
 
         $this->assertMatchesRegularExpression('/^[A-Z0-9]{6}$/', $response->json('duel.code'));
         $this->assertStringContainsString('startapp=duel_', $response->json('duel.invite_link'));
+        $this->assertMatchesRegularExpression('#^https://t\.me/[A-Za-z0-9_]+\?startapp=duel_#', $response->json('duel.invite_link'));
     }
 
     public function test_a_friend_joins_and_both_get_the_same_questions(): void

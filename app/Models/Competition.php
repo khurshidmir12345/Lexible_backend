@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\MiniAppLink;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -43,9 +44,6 @@ class Competition extends Model
 
     public function inviteLink(): string
     {
-        $bot = ltrim((string) config('telegram.username'), '@');
-        $short = config('telegram.mini_app.short_name');
-
-        return "https://telegram.me/{$bot}/{$short}?startapp=comp_{$this->code}";
+        return MiniAppLink::to("comp_{$this->code}");
     }
 }
