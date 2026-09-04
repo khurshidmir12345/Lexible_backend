@@ -13,7 +13,17 @@ class EditWord extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()->label('Oʼchirish'),
         ];
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return WordResource::applyIcon($data, $this->getRecord()->icon_id);
+    }
+
+    protected function getRedirectUrl(): ?string
+    {
+        return null;   // stay on the word after saving
     }
 }

@@ -7,6 +7,7 @@ use App\Filament\Resources\Words\Pages\EditWord;
 use App\Filament\Resources\Words\Pages\ListWords;
 use App\Filament\Resources\Words\Schemas\WordForm;
 use App\Filament\Resources\Words\Tables\WordsTable;
+use App\Models\Icon;
 use App\Models\Word;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -53,6 +54,30 @@ class WordResource extends Resource
     public static function table(Table $table): Table
     {
         return WordsTable::configure($table);
+    }
+
+    /**
+     * An icon chosen in the form is an admin's decision: it is stored as
+     * `manual` so the automatic matcher never overwrites it, and `icon_path`
+     * (what the API serves) follows the chosen icon. Removing the icon is a
+     * decision too — the word stays without a picture.
+     */
+    public static function applyIcon(array $data, ?int $previousIconId): array
+    {
+        $iconId = isset($data['icon_id']) ? (int) $data['icon_id'] : null;
+
+        if ($iconId === $previousIconId) {
+            return $data;
+        }
+
+        $icon = $iconId ? Icon::find($iconId) : null;
+
+        $data['icon_id'] = $icon?->id;
+        $data['icon_path'] = $icon ? Icon::pathFor($icon->slug) : null;
+        $data['icon_source'] = 'manual';
+        $data['icon_confidence'] = $icon ? 100 : null;
+
+        return $data;
     }
 
     public static function getPages(): array

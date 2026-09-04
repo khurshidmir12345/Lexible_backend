@@ -27,6 +27,9 @@ class ListWords extends ListRecords
     public function getTabs(): array
     {
         return [
+            'all' => Tab::make('Hammasi')
+                ->badge(Word::count()),
+
             'review' => Tab::make('Tekshirish navbati')
                 ->icon('heroicon-o-exclamation-circle')
                 ->badge(Word::where('needs_review', true)->count())
@@ -49,14 +52,11 @@ class ListWords extends ListRecords
                 ->badgeColor('success')
                 ->badge(Word::where('needs_review', false)->count())
                 ->modifyQueryUsing(fn ($query) => $query->where('needs_review', false)),
-
-            'all' => Tab::make('Hammasi')
-                ->badge(Word::count()),
         ];
     }
 
     public function getDefaultActiveTab(): string|int|null
     {
-        return 'review';
+        return 'all';
     }
 }
