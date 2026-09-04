@@ -62,7 +62,9 @@ class IconReviewTest extends TestCase
             ->call('select', $this->hello->id)
             ->assertSee('Hand-wave')
             ->call('pick', 'hand-wave')
-            ->assertSet('selectedId', $this->apple->id);   // hello left the pending list
+            ->assertSet('selectedId', $this->apple->id)   // the next word is up
+            ->assertSee('hello')                           // …but the decided one stays in its row
+            ->assertSee('✓ admin');
 
         $this->hello->refresh();
         $this->assertSame('hand-wave', $this->hello->icon->slug);

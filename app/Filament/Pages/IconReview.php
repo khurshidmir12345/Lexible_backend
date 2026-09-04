@@ -62,6 +62,15 @@ class IconReview extends Page
 
     public string $iconQuery = '';
 
+    /**
+     * Words decided during this visit. They would drop out of the "pending"
+     * list at once, which looked like the word vanishing — so they stay in
+     * place, marked as done, until the filter or page changes.
+     *
+     * @var list<int>
+     */
+    public array $decided = [];
+
     public static function getNavigationBadge(): ?string
     {
         $pending = static::pendingQuery()->count();
@@ -94,19 +103,29 @@ class IconReview extends Page
 
     public function updatedSearch(): void
     {
-        $this->resetPage();
-        $this->selectedId = null;
+        $this->resetList();
     }
 
     public function updatedStatus(): void
     {
-        $this->resetPage();
-        $this->selectedId = null;
+        $this->resetList();
     }
 
     public function updatedMaxRank(): void
     {
+        $this->resetList();
+    }
+
+    public function updatedPaginators(): void
+    {
+        $this->decided = [];
+        $this->selectedId = null;
+    }
+
+    protected function resetList(): void
+    {
         $this->resetPage();
+        $this->decided = [];
         $this->selectedId = null;
     }
 
@@ -122,13 +141,18 @@ class IconReview extends Page
 
         $notManual = fn (Builder $q) => $q->whereNull('icon_source')->orWhere('icon_source', '!=', 'manual');
 
-        match ($this->status) {
-            'pending' => $query->where($notManual),
-            'none' => $query->whereNull('icon_id')->where($notManual),
-            'low' => $query->whereNotNull('icon_id')->where($notManual)->where('icon_confidence', '<', 80),
-            'manual' => $query->where('icon_source', 'manual'),
+        $status = match ($this->status) {
+            'pending' => fn (Builder $q) => $q->where($notManual),
+            'none' => fn (Builder $q) => $q->whereNull('icon_id')->where($notManual),
+            'low' => fn (Builder $q) => $q->whereNotNull('icon_id')->where($notManual)->where('icon_confidence', '<', 80),
+            'manual' => fn (Builder $q) => $q->where('icon_source', 'manual'),
             default => null,
         };
+
+        if ($status) {
+            $query->where(fn (Builder $q) => $q->where($status)
+                ->when($this->decided !== [], fn (Builder $q) => $q->orWhereIn('id', $this->decided)));
+        }
 
         if ($term = mb_strtolower(trim($this->search))) {
             $query->where('normalized', 'like', addcslashes($term, '%_\\').'%');
@@ -192,32 +216,25 @@ class IconReview extends Page
         $this->select($ids[$next]);
     }
 
-    /**
-     * Once a word is decided it usually leaves the "pending" list, so the row
-     * that took its place is selected — the reviewer just keeps pressing keys.
-     */
+    /** The decided word stays in its row (marked done); the next one is selected. */
     protected function advance(int $fromId): void
     {
+        if (! in_array($fromId, $this->decided, true)) {
+            $this->decided[] = $fromId;
+        }
+
+        unset($this->words);
+
         $ids = $this->words->getCollection()->pluck('id')->values();
         $index = $ids->search($fromId);
 
-        unset($this->words);   // the decision changed the list — recompute
-
-        $fresh = $this->words->getCollection()->pluck('id')->values();
-
-        if ($fresh->isEmpty()) {
+        if ($ids->isEmpty()) {
             $this->selectedId = null;
 
             return;
         }
 
-        if ($fresh->contains($fromId)) {
-            $this->select($fresh[min($fresh->count() - 1, ($fresh->search($fromId)) + 1)]);
-
-            return;
-        }
-
-        $this->select($fresh[min($fresh->count() - 1, $index === false ? 0 : $index)]);
+        $this->select($ids[$index === false ? 0 : min($ids->count() - 1, $index + 1)]);
     }
 
     /* ---------------------------------------------------------- decisions */
