@@ -55,7 +55,6 @@ class AssignIcons extends Command
         }
 
         $icons = Icon::query()->pluck('id', 'slug');
-        $ids = DB::table('words')->pluck('id', 'normalized');
         $min = (int) $this->option('min');
         $force = (bool) $this->option('force');
 
@@ -65,6 +64,12 @@ class AssignIcons extends Command
         $bar->start();
 
         foreach (array_chunk($rows, 500) as $chunk) {
+            // Ids are looked up per chunk: the dictionary holds 400k rows, and
+            // pulling every id/word pair at once blows the CLI memory limit.
+            $ids = DB::table('words')
+                ->whereIn('normalized', collect($chunk)->pluck('word')->filter()->map(fn ($w) => mb_strtolower(trim($w))))
+                ->pluck('id', 'normalized');
+
             DB::transaction(function () use ($chunk, $icons, $ids, $min, $force, &$stats, $bar) {
                 foreach ($chunk as $row) {
                     $bar->advance();
