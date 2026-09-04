@@ -26,13 +26,15 @@ use Illuminate\Support\Facades\File;
  *   php artisan icons:assign storage/app/private/icons/mapping.json
  *   php artisan icons:assign mapping.json --min=70      # skip weak matches
  *   php artisan icons:assign mapping.json --force       # also replace hand-picked icons
+ *   php artisan icons:assign mapping.json --reset       # first drop every machine-made icon
  */
 class AssignIcons extends Command
 {
     protected $signature = 'icons:assign
         {file : JSON mapping of word → slug}
         {--min=60 : Ignore matches below this confidence (0-100)}
-        {--force : Overwrite icons an admin set by hand}';
+        {--force : Overwrite icons an admin set by hand}
+        {--reset : Clear every machine-made icon first, so words missing from the file end up without one}';
 
     protected $description = 'Attach library icons to words from a mapping file';
 
@@ -59,6 +61,16 @@ class AssignIcons extends Command
         $force = (bool) $this->option('force');
 
         $stats = ['assigned' => 0, 'weak' => 0, 'unknown' => 0, 'kept' => 0, 'cleared' => 0, 'missing' => 0];
+
+        // A stale assignment can only be removed by a row that names the word,
+        // so a file that no longer covers a word would leave its old (possibly
+        // wrong) picture in place. --reset wipes the slate for machine picks.
+        if ($this->option('reset')) {
+            $stats['cleared'] += DB::table('words')
+                ->whereNotNull('icon_id')
+                ->where(fn ($q) => $q->whereNull('icon_source')->orWhere('icon_source', '!=', 'manual'))
+                ->update(['icon_id' => null, 'icon_path' => null, 'icon_source' => null, 'icon_confidence' => null]);
+        }
 
         $bar = $this->output->createProgressBar(count($rows));
         $bar->start();
