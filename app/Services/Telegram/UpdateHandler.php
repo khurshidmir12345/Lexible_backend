@@ -127,6 +127,7 @@ class UpdateHandler
             'reply_markup' => ['inline_keyboard' => [[[
                 'text' => "📤 Do'stga yuborish",
                 'url' => 'https://t.me/share/url?url='.urlencode($link),
+                'style' => 'primary',
             ]]]],
         ]);
     }
@@ -170,9 +171,12 @@ class UpdateHandler
                 : "🏆 Bellashuvga qo'shilish";
         }
 
+        // `style` colours the button (Bot API 9.4+): the call to play is the
+        // brand green; older clients simply ignore the field.
         return ['inline_keyboard' => [[[
             'text' => $label,
             'web_app' => ['url' => $url],
+            'style' => 'success',
         ]]]];
     }
 
