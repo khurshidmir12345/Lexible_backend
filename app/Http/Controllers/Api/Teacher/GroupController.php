@@ -123,8 +123,19 @@ class GroupController extends Controller
         $group->update($data);
         $group->refresh();
 
+        $group->loadMissing(['path.stages', 'teacher']);
+
         foreach ($group->students()->get() as $student) {
             $this->groups->materialise($group, $student);
+
+            // Every student hears about the new road from the bot.
+            app(NotificationService::class)->pathAssigned(
+                $student,
+                $group->teacher?->full_name ?? 'Ustoz',
+                $group->title,
+                $group->path->title,
+                $group->path->stages->count(),
+            );
         }
 
         return ['group' => $this->presentGroup($group->fresh())];

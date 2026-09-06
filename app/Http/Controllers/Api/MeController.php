@@ -146,6 +146,7 @@ class MeController extends Controller
             'native_lang' => $user->native_lang,
             'study_days' => $user->study_days ?? [],
             'reminder_at' => $user->reminder_at ? substr((string) $user->reminder_at, 0, 5) : null,
+            'reminders_enabled' => (bool) $user->reminders_enabled,
             'cefr_level' => $user->cefr_level,
             'daily_goal' => $user->daily_goal,
             'teacher_code' => $user->teacher_code,

@@ -102,7 +102,9 @@ class MasteryService
      */
     public function touchStreak(User $user): void
     {
-        $today = today();
+        // "Today" is the player's day, not the server's: a round at 23:30 in
+        // Tashkent is still that day's practice even though UTC has moved on.
+        $today = today($user->timezone ?: 'Asia/Tashkent');
 
         if ($user->last_practiced_date?->isSameDay($today)) {
             return;

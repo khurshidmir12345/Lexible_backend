@@ -20,6 +20,16 @@ Artisan::command('inspire', function () {
 | pass. Nothing here needs supervising; it simply stops being useful once
 | every word has a translation.
 */
+/*
+| Reminders are due at the minute each player chose, in their own timezone,
+| so the sweep runs often and decides per player; it marks who it reached,
+| which is what makes running every five minutes safe.
+*/
+Schedule::command('notify:reminders')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(10)
+    ->appendOutputTo(storage_path('logs/reminders.log'));
+
 Schedule::command('dictionary:translate --limit=40000 --retry --lang=uz')
     ->dailyAt('01:00')
     ->withoutOverlapping(600)

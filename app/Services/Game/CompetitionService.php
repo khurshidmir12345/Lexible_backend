@@ -54,7 +54,7 @@ class CompetitionService
             ->where('status', 'lobby')
             ->update(['status' => 'cancelled']);
 
-        return Competition::create([
+        $competition = Competition::create([
             'code' => $this->freshCode(),
             'teacher_id' => $teacher->id,
             'group_id' => $group?->id,
@@ -65,6 +65,18 @@ class CompetitionService
             'status' => 'lobby',
             'expires_at' => now()->addMinutes(config('game.competition.lobby_ttl_minutes')),
         ])->fresh();
+
+        // A class game calls the whole roster in; an open game has no roster
+        // and is spread by its link.
+        if ($group) {
+            $where = $group->title.' · '.$stage->title;
+
+            foreach ($group->students()->get() as $student) {
+                $this->notifications->competitionOpened($student, $teacher->full_name, $where, $competition->code);
+            }
+        }
+
+        return $competition;
     }
 
     /** A student arrives through the invite link. */
@@ -99,7 +111,7 @@ class CompetitionService
         $where = $competition->group?->title ?? ($competition->stage?->title ?: 'Musobaqa');
 
         foreach ($competition->players()->with('user')->get() as $player) {
-            $this->notifications->competitionStarted($player->user_id, $where);
+            $this->notifications->competitionStarted($player->user_id, $where, $competition->code);
         }
 
         return $competition->fresh();

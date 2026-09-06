@@ -56,6 +56,11 @@ class DuelService
 
         if (! $duel->guest_id) {
             $duel->update(['guest_id' => $guest->id, 'status' => 'ready']);
+
+            // The host is usually waiting in the lobby, but may have closed
+            // the app — the bot brings them back.
+            $duel->loadMissing('category');
+            $this->notifications->duelJoined($duel->host_id, $guest->first_name ?: 'Doʼst', $duel->category?->title ?? 'Duel');
         }
 
         return $duel->fresh();

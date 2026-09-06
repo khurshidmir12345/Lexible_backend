@@ -4,6 +4,7 @@ namespace App\Services\Telegram;
 
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\BotKeyboard;
 use App\Support\MiniAppLink;
 use Illuminate\Support\Str;
 
@@ -158,26 +159,18 @@ class UpdateHandler
 
     protected function playKeyboard(?string $startParam = null): array
     {
-        $url = config('telegram.mini_app.url');
-        $label = "🎮 O'ynash";
-
         // A duel or class-game invite that arrived as a plain /start deep
         // link still lands inside the game: the button URL carries the code,
         // and the app reads it when Telegram's own start_param is absent.
         if ($startParam && preg_match('/^(duel|comp)_[A-Za-z0-9]+$/', $startParam)) {
-            $url .= (str_contains($url, '?') ? '&' : '?').'startapp='.$startParam;
             $label = str_starts_with($startParam, 'duel_')
                 ? "⚔️ Duelga qo'shilish"
                 : "🏆 Bellashuvga qo'shilish";
+
+            return BotKeyboard::play($label, $startParam);
         }
 
-        // `style` colours the button (Bot API 9.4+): the call to play is the
-        // brand green; older clients simply ignore the field.
-        return ['inline_keyboard' => [[[
-            'text' => $label,
-            'web_app' => ['url' => $url],
-            'style' => 'success',
-        ]]]];
+        return BotKeyboard::play();
     }
 
     public function referralLink(User $user): string
