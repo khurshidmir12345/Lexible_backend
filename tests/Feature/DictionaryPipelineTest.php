@@ -328,6 +328,39 @@ class DictionaryPipelineTest extends TestCase
         $this->assertSame(['home' => ['uz' => ['uy', 'turar joy']]], $result);
     }
 
+    public function test_it_repairs_the_slips_the_model_actually_makes(): void
+    {
+        $asked = array_map(fn ($w) => ['word' => $w, 'pos' => 'noun', 'gloss' => null, 'example' => null], ['surgery', 'globe', 'peak']);
+
+        // \' is not a JSON escape, a backslash before a newline is a line
+        // continuation the model borrowed from a shell, and the trailing comma.
+        $text = "{\"surgery\": {\"uz\": [\"jarrohlik\", \"o\\'tkazish\"]},\\\n\"globe\":{\"uz\":[\"globus\"]},\\\n\"peak\": {\"uz\": [\"choʻqqi\",]},}";
+
+        $result = app(GeminiTranslator::class)->parse($text, $asked);
+
+        $this->assertSame(['jarrohlik', 'oʻtkazish'], $result['surgery']['uz']);
+        $this->assertSame(['globus'], $result['globe']['uz']);
+        $this->assertSame(['choʻqqi'], $result['peak']['uz']);
+    }
+
+    public function test_a_reply_cut_off_mid_entry_still_yields_the_complete_ones(): void
+    {
+        $asked = array_map(fn ($w) => ['word' => $w, 'pos' => 'noun', 'gloss' => null, 'example' => null], ['conflict', 'cherry', 'horses']);
+
+        $text = "{\n  \"conflict\": {\n    \"uz\": [\"ziddiyat\", \"mojaro\"]\n  },\n  \"cherry\": {\n    \"uz\": [\n      \"o";
+
+        $result = app(GeminiTranslator::class)->parse($text, $asked);
+
+        $this->assertSame(['conflict' => ['uz' => ['ziddiyat', 'mojaro']]], $result);
+    }
+
+    public function test_pure_garbage_is_still_rejected(): void
+    {
+        $this->expectException(\RuntimeException::class);
+
+        app(GeminiTranslator::class)->parse('Sorry, I cannot help with that.', [['word' => 'x', 'pos' => null, 'gloss' => null, 'example' => null]]);
+    }
+
     public function test_it_fills_several_languages_in_one_call(): void
     {
         $asked = [['word' => 'home', 'pos' => 'noun', 'gloss' => null, 'example' => null]];

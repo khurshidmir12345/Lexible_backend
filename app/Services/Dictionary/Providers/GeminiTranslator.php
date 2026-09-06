@@ -243,7 +243,7 @@ class GeminiTranslator implements Translator
      */
     public function parse(string $text, array $words, array $locales = ['uz']): array
     {
-        $decoded = json_decode($this->unfence($text), true);
+        $decoded = $this->decode($this->unfence($text));
 
         if (! is_array($decoded)) {
             throw new RuntimeException('Gemini javobini oʼqib boʼlmadi: '.mb_substr($text, 0, 200));
@@ -327,6 +327,55 @@ class GeminiTranslator implements Translator
 
         // Everywhere else it is the modifier apostrophe: "taʼlim", "eʼtibor".
         return preg_replace('/[\x{2018}\x{2019}\x{0027}\x{0060}\x{00B4}]/u', 'ʼ', $value);
+    }
+
+    /**
+     * JSON as the model actually writes it.
+     *
+     * About four batches in ten came back almost right: an apostrophe escaped
+     * as \' (invalid in JSON), a backslash before a line break, a trailing
+     * comma, or a reply cut off mid-entry. Each of those threw the whole batch
+     * away and, after three nights, parked a hundred perfectly common words as
+     * "failed". So: repair the usual slips first, and if the text still does
+     * not parse, pull out every entry that is complete on its own — the words
+     * that were lost simply stay in the queue.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function decode(string $text): ?array
+    {
+        $decoded = json_decode($text, true);
+
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+
+        $repaired = preg_replace([
+            '/\\\\\r?\n/',           // backslash used as a line continuation
+            "/\\\\'/",               // \' is not a JSON escape
+            '/,\s*([}\]])/',         // trailing commas
+        ], ['', "'", '$1'], $text);
+
+        $decoded = json_decode($repaired, true);
+
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+
+        // Entry by entry: "word": { "uz": [...], "ru": [...] }
+        $out = [];
+
+        if (preg_match_all('/"((?:[^"\\\\]|\\\\.)+)"\s*:\s*(\{(?:[^{}]|\{[^{}]*\})*\})/u', $repaired, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $m) {
+                $entry = json_decode($m[2], true);
+
+                if (is_array($entry)) {
+                    $out[stripslashes($m[1])] = $entry;
+                }
+            }
+        }
+
+        return $out !== [] ? $out : null;
     }
 
     /** Models occasionally fence JSON despite being asked not to. */
