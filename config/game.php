@@ -122,7 +122,7 @@ return [
     */
 
     'exam' => [
-        'questions' => 9,
+        'questions' => 10,
         'pass_mark' => 70,
         'types' => ['uz2en', 'en2uz', 'spell'],
     ],

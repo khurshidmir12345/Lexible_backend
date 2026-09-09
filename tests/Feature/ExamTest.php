@@ -71,11 +71,17 @@ class ExamTest extends TestCase
         $nodes = collect($this->api('GET', '/api/road')->json('nodes'));
         $exam = $nodes->firstWhere('type', 'exam');
 
+        $offset = 0;
         foreach ($nodes->where('type', 'normal')->where('position', '<', $exam['position']) as $node) {
-            // Opening the stage auto-fills it; the round itself is not what is
-            // under test here, so the node is closed directly.
-            $this->api('GET', "/api/categories/{$node['id']}");
-            Category::where('id', $node['id'])->update(['status' => 'completed', 'progress' => 100]);
+            // The round itself is not what is under test here: each stage
+            // gets five words of its own and is closed directly.
+            $category = Category::find($node['id']);
+            $category->words()->attach(
+                Word::orderBy('id')->skip($offset)->take(5)->pluck('id')
+                    ->mapWithKeys(fn ($id, $i) => [$id => ['sort_order' => $i]])->all(),
+            );
+            $category->update(['title' => "Stage {$node['position']}", 'status' => 'completed', 'progress' => 100, 'words_count' => 5]);
+            $offset += 5;
         }
 
         $exam = Category::find($exam['id']);

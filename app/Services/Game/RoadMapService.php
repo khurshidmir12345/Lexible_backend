@@ -54,6 +54,46 @@ class RoadMapService
         return now()->addDays(($position - 1) * $daysPerNode)->startOfDay();
     }
 
+    /**
+     * Positions are unique per player and shared with the class stages a
+     * teacher hands down, which get appended after whatever is on the map. The
+     * personal road is therefore the personal nodes in position order, and
+     * everything that counts nodes — the exam rhythm, the lookahead, the
+     * numbers on the map — must count that road, not raw positions.
+     */
+    protected function personal(User $user)
+    {
+        return $user->categories()->whereNull('group_id')->orderBy('position');
+    }
+
+    /** Which road a node belongs to: the personal one, or one class's. */
+    protected function sameRoad(Category $category)
+    {
+        return Category::where('user_id', $category->user_id)
+            ->when($category->group_id, fn ($q) => $q->where('group_id', $category->group_id))
+            ->when(! $category->group_id, fn ($q) => $q->whereNull('group_id'));
+    }
+
+    /**
+     * The number each node wears on the map, keyed by category id. Personal
+     * nodes count 1, 2, 3… along their own road; class stages keep the number
+     * the teacher gave them, so the whole class means the same lesson by it.
+     *
+     * @return array<int, int>
+     */
+    public function numbering(User $user): array
+    {
+        $numbers = [];
+        $ordinal = 0;
+        foreach ($user->categories()->with('pathStage')->orderBy('position')->get() as $category) {
+            $numbers[$category->id] = $category->group_id
+                ? ($category->pathStage?->position ?? $category->position)
+                : ++$ordinal;
+        }
+
+        return $numbers;
+    }
+
     /** Called when a category's words are all practised well enough. */
     public function complete(Category $category): ?Category
     {
@@ -63,8 +103,11 @@ class RoadMapService
             'completed_at' => now(),
         ]);
 
-        $next = Category::where('user_id', $category->user_id)
-            ->where('position', $category->position + 1)
+        // The next node on the same road — never a class stage that happens
+        // to hold the next position number.
+        $next = $this->sameRoad($category)
+            ->where('position', '>', $category->position)
+            ->orderBy('position')
             ->first();
 
         if ($next && $next->status === 'locked') {
@@ -83,18 +126,57 @@ class RoadMapService
         $lookahead = config('game.road.lookahead');
         $examEvery = config('game.road.exam_every');
 
-        $last = $user->categories()->max('position') ?? 0;
-        $furthestOpen = $user->categories()->where('status', '!=', 'locked')->max('position') ?? 1;
+        $road = $this->personal($user)->get();
+        $count = $road->count();
+        $furthestOpen = $road->where('status', '!=', 'locked')->keys()->last() ?? 0;   // zero-based
 
-        for ($position = $last + 1; $position <= $furthestOpen + $lookahead; $position++) {
+        // Positions are unique across the player's map, so a new node goes
+        // after everything, but it is the personal count that says whether
+        // it is an exam.
+        $position = (int) ($user->categories()->max('position') ?? 0);
+
+        for ($ordinal = $count + 1; $ordinal <= $furthestOpen + 1 + $lookahead; $ordinal++) {
             Category::create([
                 'user_id' => $user->id,
-                'position' => $position,
-                'type' => $position % $examEvery === 0 ? 'exam' : 'normal',
+                'position' => ++$position,
+                'type' => $ordinal % $examEvery === 0 ? 'exam' : 'normal',
                 'status' => 'locked',
-                'unlock_date' => $this->dateFor($user, $position),
+                'unlock_date' => $this->dateFor($user, $ordinal),
             ]);
         }
+    }
+
+    /**
+     * Straightens a road that was extended while class stages sat between its
+     * nodes: the exam rhythm is re-read from the personal count. Only untouched
+     * nodes are retyped; one with words or progress is left as it is.
+     *
+     * @return array{fixed: int, skipped: int}
+     */
+    public function repair(User $user): array
+    {
+        $examEvery = config('game.road.exam_every');
+        $fixed = 0;
+        $skipped = 0;
+
+        foreach ($this->personal($user)->get()->values() as $i => $category) {
+            $type = ($i + 1) % $examEvery === 0 ? 'exam' : 'normal';
+
+            if ($category->type === $type) {
+                continue;
+            }
+
+            if ($category->status !== 'locked' || $category->words_count > 0) {
+                $skipped++;
+
+                continue;
+            }
+
+            $category->update(['type' => $type, 'title' => null]);
+            $fixed++;
+        }
+
+        return ['fixed' => $fixed, 'skipped' => $skipped];
     }
 
     /** Progress is how far the category's words are from being learned. */

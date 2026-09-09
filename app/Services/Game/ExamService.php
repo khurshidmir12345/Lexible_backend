@@ -15,6 +15,8 @@ use Illuminate\Support\Collection;
  */
 class ExamService
 {
+    public function __construct(protected RoadMapService $road) {}
+
     /** Every word from the stages leading up to this exam. */
     public function pool(Category $exam): Collection
     {
@@ -41,15 +43,16 @@ class ExamService
      * An exam is a fixed number of questions, not a fixed number of words: each
      * sampled word is asked once, in one exercise, so the count is exact.
      *
-     * @return array{slices: array<array{type: string, words: Collection}>, types: array}
+     * @return array{slices: array<array{type: string, words: Collection}>, types: array, pool: Collection}
      */
     public function plan(Category $exam): array
     {
         $types = config('game.exam.types');
-        $words = $this->pool($exam)->shuffle()->take(config('game.exam.questions'))->values();
+        $pool = $this->pool($exam);
+        $words = $pool->shuffle()->take(config('game.exam.questions'))->values();
 
         if ($words->isEmpty()) {
-            return ['slices' => [], 'types' => $types];
+            return ['slices' => [], 'types' => $types, 'pool' => $pool];
         }
 
         // Spread the words evenly over the exercises so no one skill decides
@@ -60,7 +63,7 @@ class ExamService
             ->map(fn (Collection $chunk, int $i) => ['type' => $types[$i] ?? end($types), 'words' => $chunk])
             ->all();
 
-        return ['slices' => $slices, 'types' => $types];
+        return ['slices' => $slices, 'types' => $types, 'pool' => $pool];
     }
 
     /** What the confirmation sheet needs before the player commits. */
@@ -77,6 +80,12 @@ class ExamService
 
         $questions = min(config('game.exam.questions'), $pool->count());
 
+        // Numbers as the map shows them, not raw positions: a personal road
+        // keeps counting from 1 whatever class stages sit between its nodes.
+        $numbers = $this->road->numbering($exam->user);
+        $first = $numbers[$covered->first()?->id] ?? $covered->first()?->position;
+        $last = $numbers[$covered->last()?->id] ?? $covered->last()?->position;
+
         return [
             'questions' => $questions,
             'pass_mark' => config('game.exam.pass_mark'),
@@ -84,7 +93,7 @@ class ExamService
             'ready' => $questions > 0,
             'covers' => $covered->isEmpty()
                 ? null
-                : "{$covered->first()->position}–{$covered->last()->position} bosqichlardagi soʼzlardan",
+                : "{$first}–{$last} bosqichlardagi soʼzlardan",
         ];
     }
 

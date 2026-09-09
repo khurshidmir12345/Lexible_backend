@@ -20,6 +20,7 @@ class RoadController extends Controller
     {
         $user = $request->user();
         $nodes = $road->forUser($user)->load(['group.teacher', 'pathStage']);
+        $numbers = $road->numbering($user);
 
         $paths = $this->paths($request);
 
@@ -33,8 +34,9 @@ class RoadController extends Controller
                 'id' => $c->id,
                 // Inside a teacher's path the stage keeps its own numbering,
                 // so a class talks about "3-bosqich" and everyone means the
-                // same lesson regardless of what else is on their map.
-                'position' => $c->pathStage?->position ?? $c->position,
+                // same lesson regardless of what else is on their map; the
+                // personal road counts from 1 on its own.
+                'position' => $numbers[$c->id] ?? $c->position,
                 'title' => $c->title,
                 'type' => $c->type,
                 'status' => in_array((string) $c->group_id, $unpaid, true) ? 'locked' : $c->status,

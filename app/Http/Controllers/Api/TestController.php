@@ -67,7 +67,7 @@ class TestController extends Controller
             $questions = [];
             foreach ($plan['slices'] as $slice) {
                 $questions = array_merge($questions, $this->builder->build(
-                    $category, [$slice['type']], $slice['words'], $request->user()->native_lang,
+                    $category, [$slice['type']], $slice['words'], $request->user()->native_lang, $plan['pool'],
                 ));
             }
         } else {

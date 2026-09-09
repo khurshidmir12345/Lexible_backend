@@ -14,14 +14,20 @@ use Illuminate\Support\Collection;
  */
 class TestBuilder
 {
-    public function build(?Category $category, array $types, Collection $words, string $locale): array
+    /**
+     * `$decoys` is where wrong answers are drawn from when it is wider than
+     * the words being asked — an exam asks a handful of words per exercise but
+     * should still confuse them with everything the player has covered.
+     */
+    public function build(?Category $category, array $types, Collection $words, string $locale, ?Collection $decoys = null): array
     {
         $questions = [];
+        $pool = $decoys ?? $words;
 
         foreach ($types as $type) {
             $questions = array_merge($questions, match ($type) {
                 'match' => $this->matchRounds($words, $locale),
-                default => $words->shuffle()->map(fn (Word $w) => $this->question($type, $w, $words, $locale))->all(),
+                default => $words->shuffle()->map(fn (Word $w) => $this->question($type, $w, $pool, $locale))->all(),
             });
         }
 
@@ -151,14 +157,38 @@ class TestBuilder
             return $local;
         }
 
-        $extra = Word::usable($locale)
-            ->whereNotIn('id', $pool->pluck('id')->push($word->id))
-            ->when($word->part_of_speech, fn ($q) => $q->where('part_of_speech', $word->part_of_speech))
-            ->inRandomOrder()
-            ->limit($needed - $local->count())
+        return $local->concat($this->fromDictionary($word, $pool, $locale, $needed - $local->count()));
+    }
+
+    /**
+     * Random decoys from the dictionary without `ORDER BY RAND()`: on a
+     * four-hundred-thousand-row table that sorts the whole table per
+     * question and turned an exam start into a gateway timeout. A random
+     * window over the commonest teachable words is one index walk.
+     */
+    protected function fromDictionary(Word $word, Collection $pool, string $locale, int $count): Collection
+    {
+        if ($count <= 0) {
+            return collect();
+        }
+
+        $taken = $pool->pluck('id')->push($word->id)->all();
+
+        $query = fn (bool $samePos) => Word::teachable($locale)
+            ->whereNotIn('id', $taken)
+            ->when($samePos && $word->part_of_speech, fn ($q) => $q->where('part_of_speech', $word->part_of_speech))
+            ->orderBy('frequency_rank')
+            ->offset(random_int(0, 1500))
+            ->limit(40)
             ->get();
 
-        return $local->concat($extra);
+        $extra = $query(true);
+
+        if ($extra->count() < $count) {
+            $extra = $extra->concat($query(false))->unique('id');
+        }
+
+        return $extra->shuffle()->take($count)->values();
     }
 
     /** Matching is played in fixed-size rounds rather than one pair at a time. */
