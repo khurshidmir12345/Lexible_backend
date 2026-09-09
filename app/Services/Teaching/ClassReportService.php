@@ -15,9 +15,8 @@ use Illuminate\Support\Collection;
  */
 class ClassReportService
 {
-    /** Uzbek labels for the six exercises, as they appear on the weak chips. */
+    /** Uzbek labels for the five scored exercises, as they appear on the weak chips. */
     public const EXERCISE_LABELS = [
-        'card' => 'Karta',
         'uz2en' => 'U→E',
         'en2uz' => 'E→U',
         'spell' => 'Imlo',

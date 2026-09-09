@@ -190,12 +190,14 @@ class RoadMapService
             return;
         }
 
-        $average = \App\Models\WordProgress::where('user_id', $category->user_id)
+        // Every word in the stage counts, practised or not: a stage is as
+        // learned as its words are, and an untouched word is a word at 0%.
+        $sum = (int) \App\Models\WordProgress::where('user_id', $category->user_id)
             ->whereIn('word_id', $wordIds)
-            ->avg('overall') ?? 0;
+            ->sum('overall');
 
         $category->update([
-            'progress' => (int) round($average),
+            'progress' => (int) round($sum / $wordIds->count()),
             'words_count' => $wordIds->count(),
         ]);
     }

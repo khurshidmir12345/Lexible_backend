@@ -22,7 +22,7 @@ class RecalculateMastery extends Command
 {
     protected $signature = 'game:recalculate-mastery';
 
-    protected $description = 'Recompute word overalls, learned counters and stage progress with the average-of-practised formula';
+    protected $description = 'Recompute word overalls, learned counters and stage progress from the answer log';
 
     public function handle(RoadMapService $road): int
     {

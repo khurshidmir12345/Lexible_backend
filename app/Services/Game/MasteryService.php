@@ -9,7 +9,7 @@ use App\Models\Word;
 use App\Models\WordProgress;
 
 /**
- * Keeps the six mastery dimensions, the daily streak and the learned-word
+ * Keeps the five mastery dimensions, the daily streak and the learned-word
  * counter in step with what the player just answered.
  */
 class MasteryService
@@ -30,12 +30,16 @@ class MasteryService
 
         $progress->first_seen_at ??= now();
 
-        $column = 'm_'.$question['type'];
-        $current = (int) ($progress->{$column} ?? 0);
+        // Only a scored exercise moves a dimension; a flashcard is logged
+        // below but the player's "I know it" is not a graded answer.
+        if (in_array($question['type'], WordProgress::DIMENSIONS, true)) {
+            $column = 'm_'.$question['type'];
+            $current = (int) ($progress->{$column} ?? 0);
 
-        $progress->{$column} = $isCorrect
-            ? min(config('game.mastery.max'), $current + config('game.mastery.gain_on_correct'))
-            : max(0, $current - config('game.mastery.loss_on_wrong'));
+            $progress->{$column} = $isCorrect
+                ? min(config('game.mastery.max'), $current + config('game.mastery.gain_on_correct'))
+                : max(0, $current - config('game.mastery.loss_on_wrong'));
+        }
 
         $isCorrect ? $progress->correct_count++ : $progress->wrong_count++;
         $progress->last_practiced_at = now();
@@ -53,12 +57,13 @@ class MasteryService
             $this->adjustLearnedCount($session->user_id, $progress->is_learned);
         }
 
-        // A word answered right in all six exercises is properly learned.
+        // A word answered right in all five exercises is properly learned.
         if ($progress->overall >= config('game.mastery.max') && $progress->wasChanged('overall')) {
             $this->coins->award($session->user_id, config('game.coins.per_word_mastered'));
         }
 
-        if ($isCorrect) {
+        // A duel pays for the win, not for every question along the way.
+        if ($isCorrect && ! $session->duel_id) {
             $this->coins->award($session->user_id, config('game.coins.per_correct'));
         }
 

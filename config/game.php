@@ -6,8 +6,9 @@ return [
     |--------------------------------------------------------------------------
     | Test types
     |--------------------------------------------------------------------------
-    | The six exercises a player can pick before a round. Each one is also a
-    | mastery dimension stored on `word_progress` as `m_<key>`.
+    | The six exercises a player can pick before a round. All but the
+    | flashcard are also mastery dimensions stored on `word_progress` as
+    | `m_<key>` (see WordProgress::DIMENSIONS).
     */
 
     'test_types' => ['card', 'uz2en', 'en2uz', 'spell', 'image', 'match'],
@@ -26,7 +27,8 @@ return [
     | Mastery
     |--------------------------------------------------------------------------
     | Each correct answer raises that dimension, each miss lowers it. A word
-    | counts as learned once its six-dimension average crosses `learned_at`.
+    | climbs 20% per exercise found and counts as learned once its
+    | five-dimension percent crosses `learned_at` (four of five).
     */
 
     'mastery' => [
@@ -52,7 +54,7 @@ return [
     'coins' => [
         'per_correct' => 1,
         'per_word_mastered' => 5,
-        'per_duel_win' => 10,
+        'per_duel_win' => 1,        // a duel pays for the win only, never per question
         'per_group_duel_win' => 20,
         'per_referral' => 50,
 

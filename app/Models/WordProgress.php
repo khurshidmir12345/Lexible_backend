@@ -7,8 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WordProgress extends Model
 {
-    /** The six mastery dimensions, in the order the UI lists them. */
-    public const DIMENSIONS = ['card', 'uz2en', 'en2uz', 'spell', 'image', 'match'];
+    /**
+     * The five scored exercises, in the order the UI lists them. The flashcard
+     * is a game too, but it has no right answer — the player just flips it —
+     * so it never moves a word's mastery.
+     */
+    public const DIMENSIONS = ['uz2en', 'en2uz', 'spell', 'image', 'match'];
 
     protected $table = 'word_progress';
 
@@ -41,17 +45,13 @@ class WordProgress extends Model
             ->all();
     }
 
-    /** Recompute the average shown on the word row and the learned flag. */
+    /** Recompute the percent shown on the word row and the learned flag. */
     public function recalculate(): void
     {
-        // Each exercise type is scored out of 100 on its own, so the overall
-        // averages only the exercises actually practised. Dividing by all six
-        // capped a word played in one game type at 16% forever.
-        $practised = array_filter($this->mastery(), fn (int $value) => $value > 0);
-
-        $this->overall = $practised === []
-            ? 0
-            : (int) round(array_sum($practised) / count($practised));
+        // A word climbs in five steps of 20%: each exercise answered right is
+        // one step, and 100% means it has been found in all five. Types not
+        // played yet count as steps not taken, not as "no data".
+        $this->overall = (int) round(array_sum($this->mastery()) / count(self::DIMENSIONS));
         $this->is_learned = $this->overall >= config('game.mastery.learned_at', 70);
     }
 }

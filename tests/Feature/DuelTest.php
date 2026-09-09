@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Duel;
+use App\Models\TestSession;
 use App\Models\User;
 use App\Models\Word;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,11 +34,14 @@ class DuelTest extends TestCase
             ]);
         }
 
-        // The host onboards and opens their first stage, which fills it.
+        // The host onboards and fills their first stage by hand — a stage
+        // starts empty, and a duel needs a playable one.
         $this->as(111)->postJson('/api/onboarding', $this->answers());
         $nodes = $this->as(111)->getJson('/api/road')->json('nodes');
         $this->categoryId = $nodes[0]['id'];
-        $this->as(111)->getJson("/api/categories/{$this->categoryId}");
+        foreach (Word::orderBy('id')->take(6)->pluck('id') as $id) {
+            $this->as(111)->postJson("/api/categories/{$this->categoryId}/words", ['word_id' => $id]);
+        }
     }
 
     protected function answers(): array
@@ -108,8 +112,16 @@ class DuelTest extends TestCase
             ->json('duel.code');
 
         $this->as(222, 'Aziz')->postJson("/api/duels/{$code}/join");
-        $this->as(111)->postJson("/api/duels/{$code}/play");
+        $play = $this->as(111)->postJson("/api/duels/{$code}/play");
         $this->as(222)->postJson("/api/duels/{$code}/play");
+
+        // The score is what the session recorded, not what the client claims:
+        // the host gets one question right, the guest none.
+        $question = $play->json('questions.0');
+        $answer = collect(TestSession::find($play->json('session_id'))->payload)->firstWhere('id', $question['id'])['answer'];
+        $this->as(111)->postJson("/api/tests/{$play->json('session_id')}/answer", [
+            'question_id' => $question['id'], 'answer' => $answer,
+        ]);
 
         $this->as(111)->postJson("/api/duels/{$code}/finish", ['score' => 5, 'duration_ms' => 40000])
             ->assertSuccessful()
@@ -163,5 +175,34 @@ class DuelTest extends TestCase
             ->json('duel.code');
 
         $this->as(111)->postJson("/api/duels/{$code}/play")->assertStatus(409);
+    }
+
+    public function test_a_duel_pays_for_the_win_and_not_per_question(): void
+    {
+        $code = $this->as(111)
+            ->postJson("/api/categories/{$this->categoryId}/duels", ['types' => ['uz2en']])
+            ->json('duel.code');
+
+        $this->as(222, 'Aziz')->postJson("/api/duels/{$code}/join");
+        $play = $this->as(111)->postJson("/api/duels/{$code}/play")->assertSuccessful();
+        $this->as(222)->postJson("/api/duels/{$code}/play");
+
+        $sessionId = $play->json('session_id');
+        $question = $play->json('questions.0');
+        $answer = collect(TestSession::find($sessionId)->payload)->firstWhere('id', $question['id'])['answer'];
+
+        // A right answer in a duel moves mastery but leaves the purse alone.
+        $this->as(111)->postJson("/api/tests/{$sessionId}/answer", [
+            'question_id' => $question['id'], 'answer' => $answer,
+        ])->assertSuccessful()->assertJsonPath('correct', true)->assertJsonPath('coins_earned', 0);
+
+        $this->assertSame(0, User::where('telegram_id', 111)->value('coins'));
+
+        $this->as(111)->postJson("/api/duels/{$code}/finish", ['score' => 1, 'duration_ms' => 20000]);
+        $this->as(222)->postJson("/api/duels/{$code}/finish", ['score' => 0, 'duration_ms' => 25000])
+            ->assertJsonPath('duel.status', 'finished');
+
+        $this->assertSame(1, config('game.coins.per_duel_win'));
+        $this->assertSame(1, User::where('telegram_id', 111)->value('coins'));
     }
 }

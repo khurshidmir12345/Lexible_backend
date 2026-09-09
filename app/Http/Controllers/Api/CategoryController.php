@@ -95,7 +95,7 @@ class CategoryController extends Controller
                     'overall' => $p?->overall ?? 0,
                 ];
             })->values(),
-            'mastery_by_type' => $this->masteryByType($states),
+            'mastery_by_type' => $this->masteryByType($states, $words->count()),
         ];
     }
 
@@ -145,21 +145,21 @@ class CategoryController extends Controller
     }
 
     /**
-     * Which exercises are weak across the whole category. Each type averages
-     * only the words actually played in it — words a type has not asked yet
-     * would otherwise drag a clean 100% down for no fault of the player's.
+     * How much of the stage each exercise has covered: the share of its words
+     * whose last answer in that type was right. A word the type has not asked
+     * yet is a word not yet learned that way, so it counts against the
+     * percent — which is what makes the five columns average out to the
+     * stage's overall figure.
      *
      * @param  array<int, array<string, bool>>  $states  last answer per word and type
      */
-    protected function masteryByType(array $states): array
+    protected function masteryByType(array $states, int $total): array
     {
         return collect(WordProgress::DIMENSIONS)
-            ->mapWithKeys(function (string $dimension) use ($states) {
-                $played = collect($states)
-                    ->filter(fn (array $types) => array_key_exists($dimension, $types))
-                    ->map(fn (array $types) => $types[$dimension] ? 100 : 0);
+            ->mapWithKeys(function (string $dimension) use ($states, $total) {
+                $right = collect($states)->filter(fn (array $types) => $types[$dimension] ?? false)->count();
 
-                return [$dimension => $played->isEmpty() ? 0 : (int) round($played->avg())];
+                return [$dimension => $total ? (int) round($right / $total * 100) : 0];
             })
             ->all();
     }

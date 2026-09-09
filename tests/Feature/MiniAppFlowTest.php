@@ -190,14 +190,14 @@ class MiniAppFlowTest extends TestCase
             ->assertJsonPath('accuracy', 100)
             ->assertJsonPath('streak_days', 1);
 
-        // Each word was asked once per exercise, so those two dimensions sit at
-        // one correct answer (20) and the other four are untouched — an overall
-        // average of 7, far below the threshold that completes a node.
+        // Every word was found in two of the five exercises: those two columns
+        // read 100%, the other three 0%, and each word sits at 40% — two steps
+        // of twenty, well below the threshold that completes a node.
         $this->api('GET', "/api/categories/{$categoryId}")
-            ->assertJsonPath('mastery_by_type.uz2en', 20)
-            ->assertJsonPath('mastery_by_type.spell', 20)
-            ->assertJsonPath('mastery_by_type.card', 0)
-            ->assertJsonPath('words.0.overall', 7);
+            ->assertJsonPath('mastery_by_type.uz2en', 100)
+            ->assertJsonPath('mastery_by_type.spell', 100)
+            ->assertJsonPath('mastery_by_type.image', 0)
+            ->assertJsonPath('words.0.overall', 40);
 
         // The node stays open: mastery is nowhere near the learned threshold.
         $this->assertSame('in_progress', Category::find($categoryId)->status);
@@ -210,7 +210,7 @@ class MiniAppFlowTest extends TestCase
             'cefr_level' => 'A1', 'daily_goal' => 5,
         ]);
 
-        foreach ([['book', 'kitob'], ['water', 'suv'], ['apple', 'olma'], ['house', 'uy']] as [$en, $uz]) {
+        foreach ([['book', 'kitob'], ['water', 'suv'], ['apple', 'olma'], ['house', 'uy'], ['car', 'mashina']] as [$en, $uz]) {
             Word::create(['word' => $en, 'part_of_speech' => 'noun', 'translations' => ['uz' => [$uz]]]);
         }
 
@@ -224,7 +224,7 @@ class MiniAppFlowTest extends TestCase
         $question = $start->json('questions.0');
 
         $this->assertSame('match', $question['type']);
-        $this->assertCount(4, $question['pairs']);
+        $this->assertCount(5, $question['pairs']);
 
         // Three pairs found cleanly, one fumbled.
         $pairs = collect($question['pairs'])
@@ -243,7 +243,8 @@ class MiniAppFlowTest extends TestCase
         $clean = collect($mastery)->firstWhere('id', $pairs[1]['word_id']);
 
         $this->assertSame(0, $fumbled['mastery']['match'], 'a missed pair must not gain mastery');
-        $this->assertSame(20, $clean['mastery']['match'], 'a found pair gains one step');
+        $this->assertSame(100, $clean['mastery']['match'], 'a found pair passes the exercise');
+        $this->assertSame(20, $clean['overall'], 'one exercise of five is one step of twenty');
     }
 
     public function test_the_learned_counter_never_goes_below_zero(): void
@@ -255,7 +256,7 @@ class MiniAppFlowTest extends TestCase
             'cefr_level' => 'A1', 'daily_goal' => 5,
         ]);
 
-        foreach ([['book', 'kitob'], ['water', 'suv'], ['apple', 'olma'], ['house', 'uy']] as [$en, $uz]) {
+        foreach ([['book', 'kitob'], ['water', 'suv'], ['apple', 'olma'], ['house', 'uy'], ['car', 'mashina']] as [$en, $uz]) {
             Word::create(['word' => $en, 'part_of_speech' => 'noun', 'translations' => ['uz' => [$uz]]]);
         }
 
@@ -284,7 +285,7 @@ class MiniAppFlowTest extends TestCase
             'cefr_level' => 'A1', 'daily_goal' => 5,
         ]);
 
-        foreach ([['book', 'kitob'], ['water', 'suv'], ['apple', 'olma'], ['house', 'uy']] as [$en, $uz]) {
+        foreach ([['book', 'kitob'], ['water', 'suv'], ['apple', 'olma'], ['house', 'uy'], ['car', 'mashina']] as [$en, $uz]) {
             Word::create(['word' => $en, 'part_of_speech' => 'noun', 'translations' => ['uz' => [$uz]]]);
         }
 

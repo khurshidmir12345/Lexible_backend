@@ -72,8 +72,8 @@ class CoinService
             'balance' => $user->coins,
             'lifetime' => $user->coins_lifetime,
             'rules' => [
-                ['emoji' => '✅', 'label' => 'Har bajarilgan mashq', 'value' => '+'.config('game.coins.per_correct')],
-                ['emoji' => '📖', 'label' => 'Soʼz toʼliq oʼzlashtirilganda (6/6)', 'value' => '+'.config('game.coins.per_word_mastered')],
+                ['emoji' => '✅', 'label' => 'Har toʼgʼri javob (duelda emas)', 'value' => '+'.config('game.coins.per_correct')],
+                ['emoji' => '📖', 'label' => 'Soʼz toʼliq oʼzlashtirilganda (5/5)', 'value' => '+'.config('game.coins.per_word_mastered')],
                 ['emoji' => '⚔️', 'label' => 'Duel gʼalabasi (1 ga 1)', 'value' => '+'.config('game.coins.per_duel_win')],
                 ['emoji' => '👥', 'label' => 'Guruhaviy duel gʼalabasi', 'value' => '+'.config('game.coins.per_group_duel_win')],
                 ['emoji' => '🎁', 'label' => 'Taklif qilingan doʼst', 'value' => '+'.config('game.coins.per_referral')],
