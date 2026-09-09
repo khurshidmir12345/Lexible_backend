@@ -32,7 +32,11 @@ class DuelController extends Controller
         abort_if($category->words()->count() < $min, Response::HTTP_UNPROCESSABLE_ENTITY,
             "Duel uchun bosqichda kamida {$min} ta soʼz kerak.");
 
-        $duel = $this->duels->create($request->user(), $category, $data['types']);
+        $types = array_values(array_intersect($data['types'], $category->allowedTypes()));
+        abort_if($types === [], Response::HTTP_UNPROCESSABLE_ENTITY,
+            'Ustoz bu yoʼlda bu mashq turlarini oʼchirgan.');
+
+        $duel = $this->duels->create($request->user(), $category, $types);
 
         return ['duel' => $this->duels->state($duel, $request->user())];
     }

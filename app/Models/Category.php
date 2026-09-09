@@ -40,6 +40,21 @@ class Category extends Model
         return $this->group_id !== null;
     }
 
+    /**
+     * Which exercises may be played here: on a teacher's stage, the ones the
+     * teacher switched on for the path; on the player's own, all of them.
+     *
+     * @return list<string>
+     */
+    public function allowedTypes(): array
+    {
+        if (! $this->path_stage_id) {
+            return config('game.test_types');
+        }
+
+        return $this->pathStage?->path?->allowedTypes() ?? config('game.test_types');
+    }
+
     public function words(): BelongsToMany
     {
         return $this->belongsToMany(Word::class)

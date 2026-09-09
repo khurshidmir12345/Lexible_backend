@@ -309,4 +309,38 @@ class CompetitionTest extends TestCase
         $this->assertNotEmpty($session['questions']);
         $this->assertNull(TestSession::find($session['session_id'])->category_id);
     }
+
+    public function test_the_board_can_be_drawn_as_a_picture_for_the_class_group(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        // The bot API is faked: initData is still signed with the test token.
+        \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response(['ok' => false], 200)]);
+
+        $class = $this->classroom();
+        $code = $this->openLobby($class);
+
+        $this->as(800)->postJson("/api/competitions/{$code}/join");
+        $this->as(801)->postJson("/api/competitions/{$code}/join");
+        $id = Competition::where('code', $code)->value('id');
+        $this->as(700)->postJson("/api/teacher/competitions/{$id}/start");
+        $this->as(800)->postJson("/api/competitions/{$code}/finish", ['score' => 4, 'total' => 5, 'duration_ms' => 40000]);
+        $this->as(801)->postJson("/api/competitions/{$code}/finish", ['score' => 2, 'total' => 5, 'duration_ms' => 50000]);
+
+        $response = $this->as(700)->postJson("/api/competitions/{$code}/share");
+        $this->assertTrue($response->isSuccessful(), $response->getContent());
+        $reply = $response->json();
+
+        $this->assertStringContainsString('/storage/share/comp-'.strtolower($code), $reply['image_url']);
+
+        $file = \Illuminate\Support\Facades\Storage::disk('public')->allFiles('share')[0] ?? null;
+        $this->assertNotNull($file);
+        $info = getimagesizefromstring(\Illuminate\Support\Facades\Storage::disk('public')->get($file));
+        $this->assertSame([1080, 1350], [$info[0], $info[1]]);
+
+        // A classmate may share too; a stranger may not.
+        $mate = $this->as(800)->postJson("/api/competitions/{$code}/share");
+        $this->assertTrue($mate->isSuccessful(), $mate->getContent());
+        $this->as(904, 'Chetdan')->getJson('/api/me');
+        $this->as(904)->postJson("/api/competitions/{$code}/share")->assertStatus(403);
+    }
 }

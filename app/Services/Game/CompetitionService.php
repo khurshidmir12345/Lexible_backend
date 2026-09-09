@@ -45,7 +45,7 @@ class CompetitionService
         $min = (int) config('game.session.min_words');
         abort_if($words->count() < $min, 422, "Bellashuv uchun bosqichda kamida {$min} ta soʼz kerak.");
 
-        $types = $types ?: config('game.competition.types');
+        $types = $types ?: $this->defaultTypes($stage);
 
         // A stale lobby for the same stage would confuse the class, so it is
         // retired the moment a new one opens.
@@ -345,6 +345,24 @@ class CompetitionService
         return Category::where('user_id', $student->id)
             ->where('path_stage_id', $competition->path_stage_id)
             ->first();
+    }
+
+    /**
+     * A class game is played with the exercises the teacher switched on for
+     * the path — all but the flashcard, which has no right answer to race
+     * on. A path with nothing chosen falls back to the usual pair.
+     *
+     * @return list<string>
+     */
+    protected function defaultTypes(PathStage $stage): array
+    {
+        if (! $stage->path->types) {
+            return config('game.competition.types');
+        }
+
+        $chosen = array_values(array_diff($stage->path->allowedTypes(), ['card']));
+
+        return $chosen ?: config('game.competition.types');
     }
 
     protected function clock(int $ms): string

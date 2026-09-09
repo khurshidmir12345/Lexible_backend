@@ -58,6 +58,8 @@ class CategoryController extends Controller
                 // The vocabulary belongs to whoever wrote it. A teacher's
                 // stage is read-only here; the app hides its edit controls.
                 'from_group' => $category->isFromGroup(),
+                // The exercises the picker may offer here.
+                'types' => $category->allowedTypes(),
                 'editable' => ! $category->isFromGroup(),
                 'group' => $category->group ? [
                     'id' => $category->group->id,

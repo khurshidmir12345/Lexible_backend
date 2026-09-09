@@ -19,7 +19,7 @@ class GroupJoinController extends Controller
      * A student types whatever their teacher gave them.
      *
      * That is one of two things — a group code off the whiteboard
-     * ("5A-KITOB") or the teacher's own ID from their profile ("TCHR-2381").
+     * ("LX-7K3M9Q") or the teacher's own ID from their profile ("TCHR-2381").
      * Onboarding asks for the second and the class list hands out the first,
      * so both have to land here or one of them is a dead end.
      */
@@ -49,7 +49,7 @@ class GroupJoinController extends Controller
         $teacher = User::where('teacher_ref', $code)->where('role', 'teacher')->first();
 
         abort_unless($teacher, Response::HTTP_NOT_FOUND,
-            'Bunday kod topilmadi. Guruh kodi (5A-KITOB) yoki ustoz ID (TCHR-1234) ni tekshiring.');
+            'Bunday kod topilmadi. Guruh kodi (LX-7K3M9Q) yoki ustoz ID (TCHR-1234) ni tekshiring.');
 
         $classes = $teacher->groups()->where('is_active', true)->get();
 
@@ -140,7 +140,7 @@ class GroupJoinController extends Controller
         ];
     }
 
-    /** "tchr 2381", "5a kitob" and "5A-KITOB" all mean what they look like. */
+    /** "tchr 2381", "lx 7k3m9q" and "LX-7K3M9Q" all mean what they look like. */
     protected function normalise(string $code): string
     {
         $code = strtoupper(trim($code));

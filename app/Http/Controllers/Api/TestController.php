@@ -78,7 +78,11 @@ class TestController extends Controller
                 "Oʼyin uchun kamida {$min} ta soʼz kerak — yana ".($min - $have).' ta qoʼshing.');
 
             $words = $this->wordsFor($request, $category, $scope);
-            $types = $data['types'];
+
+            // A teacher's path may have switched some games off.
+            $types = array_values(array_intersect($data['types'], $category->allowedTypes()));
+            abort_if($types === [], Response::HTTP_UNPROCESSABLE_ENTITY,
+                'Ustoz bu yoʼlda bu mashq turlarini oʼchirgan.');
 
             abort_if($words->isEmpty(), Response::HTTP_UNPROCESSABLE_ENTITY,
                 'Bu kategoriyada mashq qilinadigan soʼz yoʼq.');

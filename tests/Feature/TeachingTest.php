@@ -74,10 +74,7 @@ class TeachingTest extends TestCase
 
         $this->as(700)->patchJson("/api/teacher/stages/{$first}", [
             'title' => 'Salomlashish',
-            'words' => [
-                ['en' => 'hello', 'translation' => 'salom'],
-                ['en' => 'goodbye', 'translation' => 'xayr'],
-            ],
+            'words' => Word::orderBy('id')->take(5)->pluck('id')->all(),
         ])->assertSuccessful();
 
         $groupId = $this->as(700)->postJson('/api/teacher/groups', [
@@ -121,7 +118,7 @@ class TeachingTest extends TestCase
 
         $group = Group::find($class['group']);
 
-        $this->assertMatchesRegularExpression('/^5A-[A-Z]+$/', $group->code);
+        $this->assertMatchesRegularExpression('/^LX-[A-HJ-NP-Z2-9]{6}$/', $group->code);
     }
 
     public function test_a_teacher_types_words_and_they_reach_the_dictionary(): void

@@ -37,6 +37,7 @@ class PathController extends Controller
                 'title' => $path->title,
                 'subtitle' => $path->subtitle,
                 'emoji' => $path->emoji,
+                'types' => $path->allowedTypes(),
                 'stages_count' => $path->stages->count(),
                 // UT-01b reads out "8 bosqich · 96 soʼz · 2 guruhga biriktirilgan".
                 'words_count' => (int) $path->stages->sum('words_count'),
@@ -59,6 +60,8 @@ class PathController extends Controller
         $data = $request->validate([
             'title' => ['required', 'string', 'max:60'],
             'subtitle' => ['nullable', 'string', 'max:80'],
+            'types' => ['nullable', 'array', 'min:1'],
+            'types.*' => [Rule::in(config('game.test_types'))],
         ]);
 
         $path = $request->user()->paths()->create($data)->fresh();
@@ -67,7 +70,18 @@ class PathController extends Controller
         // next card unlocks, instead of the map forming one node at a time.
         $this->seedStages($path, self::INITIAL_STAGES);
 
-        return ['path' => ['id' => $path->id, 'title' => $path->title, 'subtitle' => $path->subtitle]];
+        return ['path' => $this->brief($path)];
+    }
+
+    /** @return array{id: int, title: string, subtitle: ?string, types: list<string>} */
+    protected function brief(Path $path): array
+    {
+        return [
+            'id' => $path->id,
+            'title' => $path->title,
+            'subtitle' => $path->subtitle,
+            'types' => $path->allowedTypes(),
+        ];
     }
 
     protected function seedStages(Path $path, int $count): void
@@ -88,11 +102,13 @@ class PathController extends Controller
         $data = $request->validate([
             'title' => ['sometimes', 'string', 'max:60'],
             'subtitle' => ['nullable', 'string', 'max:80'],
+            'types' => ['nullable', 'array', 'min:1'],
+            'types.*' => [Rule::in(config('game.test_types'))],
         ]);
 
         $path->update($data);
 
-        return ['path' => ['id' => $path->id, 'title' => $path->title, 'subtitle' => $path->subtitle]];
+        return ['path' => $this->brief($path->fresh())];
     }
 
     /**

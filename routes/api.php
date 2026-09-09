@@ -112,6 +112,7 @@ Route::middleware('miniapp')->group(function () {
     Route::post('/competitions/{code}/session', [CompetitionController::class, 'session']);
     Route::post('/competitions/{code}/finish', [CompetitionController::class, 'finish']);
     Route::get('/competitions/{code}/results', [CompetitionController::class, 'results']);
+    Route::post('/competitions/{code}/share', [CompetitionController::class, 'share']);
 
     Route::post('/tests/{session}/answer', [TestController::class, 'answer']);
     Route::post('/tests/{session}/finish', [TestController::class, 'finish']);

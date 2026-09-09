@@ -13,7 +13,20 @@ class Path extends Model
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return ['is_active' => 'boolean', 'types' => 'array'];
+    }
+
+    /**
+     * The exercises a student may play on this path's stages. A teacher who
+     * has not chosen leaves every game open.
+     *
+     * @return list<string>
+     */
+    public function allowedTypes(): array
+    {
+        $chosen = array_values(array_intersect(config('game.test_types'), $this->types ?? []));
+
+        return $chosen ?: config('game.test_types');
     }
 
     public function teacher(): BelongsTo

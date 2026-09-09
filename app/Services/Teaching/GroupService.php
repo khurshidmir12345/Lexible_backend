@@ -21,10 +21,6 @@ class GroupService
     public function __construct(protected \App\Services\Game\NotificationService $notifications) {}
 
     /** Codes are read out in class, so they are built from clear words. */
-    protected const WORDS = [
-        'KITOB', 'QUYOSH', 'DARYO', 'BAHOR', 'YULDUZ', 'CHINOR',
-        'BULUT', 'DENGIZ', 'GULZOR', 'SHAMOL', 'OLTIN', 'LOLA',
-    ];
 
     public function create(User $teacher, array $data): Group
     {
@@ -36,7 +32,7 @@ class GroupService
             'title' => $data['title'],
             'subtitle' => $data['subtitle'] ?? null,
             'badge' => $badge,
-            'code' => $this->freshCode($badge),
+            'code' => $this->freshCode(),
         ])->fresh();
     }
 
@@ -189,13 +185,21 @@ class GroupService
             ->all();
     }
 
-    /** "5A-KITOB" — the badge plus a word, so it reads well on a whiteboard. */
-    protected function freshCode(string $badge): string
-    {
-        $badge = Str::upper(preg_replace('/[^A-Za-z0-9]/', '', $badge)) ?: 'GR';
+    /**
+     * "LX-7K3M9Q" — minted here, never derived from anything the teacher
+     * typed, so two classes called 5-A in two schools can never collide and
+     * a code cannot be guessed from a badge. The alphabet drops 0/O, 1/I/L
+     * so it survives being read out loud or copied off a whiteboard.
+     */
+    public const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
+    protected function freshCode(): string
+    {
         do {
-            $code = $badge.'-'.self::WORDS[array_rand(self::WORDS)];
+            $code = 'LX-';
+            for ($i = 0; $i < 6; $i++) {
+                $code .= self::CODE_ALPHABET[random_int(0, strlen(self::CODE_ALPHABET) - 1)];
+            }
         } while (Group::where('code', $code)->exists());
 
         return $code;

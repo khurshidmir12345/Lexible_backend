@@ -67,6 +67,25 @@ class TelegramClient
         ], $extra));
     }
 
+    /**
+     * Stores a message a Mini App user may then share into any chat with
+     * `WebApp.shareMessage(id)` — the way a teacher drops a result card into
+     * the class group without leaving the app.
+     *
+     * @param  array<string, mixed>  $result  an InlineQueryResult
+     */
+    public function savePreparedInlineMessage(int $userId, array $result, bool $groups = true, bool $channels = true): array
+    {
+        return $this->call('savePreparedInlineMessage', [
+            'user_id' => $userId,
+            'result' => $result,
+            'allow_user_chats' => true,
+            'allow_bot_chats' => false,
+            'allow_group_chats' => $groups,
+            'allow_channel_chats' => $channels,
+        ]);
+    }
+
     public function answerCallbackQuery(string $id, string $text = '', bool $alert = false): array
     {
         return $this->call('answerCallbackQuery', [
