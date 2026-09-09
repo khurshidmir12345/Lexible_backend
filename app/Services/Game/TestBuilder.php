@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
  */
 class TestBuilder
 {
-    public function build(Category $category, array $types, Collection $words, string $locale): array
+    public function build(?Category $category, array $types, Collection $words, string $locale): array
     {
         $questions = [];
 

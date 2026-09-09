@@ -67,11 +67,7 @@ class CompetitionTest extends TestCase
 
         $this->as(700)->patchJson("/api/teacher/stages/{$stageId}", [
             'title' => 'Maktab',
-            'words' => [
-                ['en' => 'hello', 'translation' => 'salom'],
-                ['en' => 'goodbye', 'translation' => 'xayr'],
-                ['en' => 'school', 'translation' => 'maktab'],
-            ],
+            'words' => Word::orderBy('id')->take(5)->pluck('id')->all(),
         ])->assertSuccessful();
 
         $groupId = $this->as(700)->postJson('/api/teacher/groups', [
@@ -288,5 +284,29 @@ class CompetitionTest extends TestCase
 
         $this->assertSame($competition->id, $session->competition_id);
         $this->assertNotNull($session->category_id);
+    }
+
+    public function test_an_outsider_in_an_open_game_gets_a_standalone_paper(): void
+    {
+        $class = $this->classroom();
+
+        $code = $this->as(700)
+            ->postJson("/api/teacher/stages/{$class['stage']}/competitions")
+            ->assertSuccessful()
+            ->json('competition.code');
+
+        // Begzod is in no class, so he has no copy of the stage on his road.
+        $this->as(903, 'Begzod')->getJson('/api/me');
+        $this->as(903)->postJson("/api/competitions/{$code}/join")->assertSuccessful();
+
+        $id = Competition::where('code', $code)->value('id');
+        $this->as(700)->postJson("/api/teacher/competitions/{$id}/start")->assertSuccessful();
+
+        $session = $this->as(903)->postJson("/api/competitions/{$code}/session")
+            ->assertSuccessful()
+            ->json();
+
+        $this->assertNotEmpty($session['questions']);
+        $this->assertNull(TestSession::find($session['session_id'])->category_id);
     }
 }
