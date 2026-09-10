@@ -48,6 +48,21 @@ class ResultCard
         return $path;
     }
 
+    /**
+     * A name as the card can draw it. Telegram names carry emoji, flags and
+     * decorative symbols that DejaVu has no glyphs for; GD then paints their
+     * raw bytes as Latin-1 soup («ð\u009f\u0091\u0091»), which is what a
+     * "garbled" card was. Only letters, digits, spaces and plain punctuation
+     * survive; a name that was nothing but emoji falls back to a label.
+     */
+    public static function plainName(?string $name, string $fallback = 'Oʼquvchi'): string
+    {
+        $kept = preg_replace('/[^\p{L}\p{M}\p{N}\s\'\x{2019}\x{02BC}\-\.]/u', '', (string) $name) ?? '';
+        $kept = trim(preg_replace('/\s+/u', ' ', $kept) ?? '');
+
+        return $kept !== '' ? $kept : $fallback;
+    }
+
     /** @param array<string, mixed> $board */
     protected function draw(array $board): string
     {
@@ -89,7 +104,7 @@ class ResultCard
         $sub[] = ($board['participants'] ?? 0).' ishtirokchi';
         $this->text($im, implode('  ·  ', $sub), 56, 236, 28, $c(0xFF, 0xFF, 0xFF, 25), $this->regular);
 
-        $this->textRight($im, $this->fit($board['group'] ?? '', 26), self::W - 56, 96, 26, $c(0xFF, 0xFF, 0xFF, 40), $this->bold);
+        $this->textRight($im, $this->fit(self::plainName($board['group'] ?? '', ''), 26), self::W - 56, 96, 26, $c(0xFF, 0xFF, 0xFF, 40), $this->bold);
 
         $standings = collect($board['standings'] ?? [])->values()->all();
         $podium = array_slice($standings, 0, 3);
@@ -97,9 +112,9 @@ class ResultCard
 
         // Podium: 2 · 1 · 3, the winner's card taller.
         $slots = [
-            ['place' => 2, 'x' => 56, 'h' => 350, 'top' => $c(0xE9, 0xEE, 0xF3), 'bar' => $c(0x9A, 0xA8, 0xB5), 'inkOn' => $ink],
-            ['place' => 1, 'x' => 380, 'h' => 390, 'top' => $c(0xFF, 0xF4, 0xD0), 'bar' => $c(0xE3, 0xB2, 0x3B), 'inkOn' => $goldInk],
-            ['place' => 3, 'x' => 704, 'h' => 330, 'top' => $c(0xF6, 0xEA, 0xE0), 'bar' => $c(0xC9, 0x8E, 0x5C), 'inkOn' => $ink],
+            ['place' => 2, 'x' => 56, 'h' => 380, 'top' => $c(0xE9, 0xEE, 0xF3), 'bar' => $c(0x9A, 0xA8, 0xB5), 'inkOn' => $ink],
+            ['place' => 1, 'x' => 380, 'h' => 420, 'top' => $c(0xFF, 0xF4, 0xD0), 'bar' => $c(0xE3, 0xB2, 0x3B), 'inkOn' => $goldInk],
+            ['place' => 3, 'x' => 704, 'h' => 360, 'top' => $c(0xF6, 0xEA, 0xE0), 'bar' => $c(0xC9, 0x8E, 0x5C), 'inkOn' => $ink],
         ];
         $podiumBase = 800;
 
@@ -119,20 +134,30 @@ class ResultCard
             $this->textCenter($im, (string) $slot['place'], $x + $w / 2, $podiumBase - 18, 34, $white, $this->bold);
 
             $cx = (int) ($x + $w / 2);
-            $this->avatar($im, $cx, $y + 86, $slot['place'] === 1 ? 64 : 54, $player['name'], $slot['top'], $slot['inkOn']);
+            $name = self::plainName($player['name']);
+            $this->avatar($im, $cx, $y + 86, $slot['place'] === 1 ? 64 : 54, $name, $slot['top'], $slot['inkOn']);
 
-            $this->textCenter($im, $this->fit($this->firstName($player['name']), 14), $cx, $y + 190, 32, $ink, $this->bold);
+            $this->textCenter($im, $this->fit($this->firstName($name), 14), $cx, $y + 190, 32, $ink, $this->bold);
             $this->textCenter($im, "{$player['score']} toʼgʼri · {$player['accuracy']}%", $cx, $y + 228, 22, $muted, $this->regular);
+            $this->textCenter($im, 'vaqt '.($player['duration'] ?? '—'), $cx, $y + 262, 22, $muted, $this->regular);
         }
 
         // The rest of the field.
         $y = $podiumBase + 44;
         foreach ($rest as $row) {
+            $name = self::plainName($row['name']);
+            $verdict = ! empty($row['finished'])
+                ? "{$row['score']} toʼgʼri · {$row['accuracy']}% · ".($row['duration'] ?? '—')
+                : 'oʼynamadi';
+
+            // The name gets whatever width the verdict leaves it, so the two
+            // can never run into each other however long either is.
+            $nameRoom = self::W - 84 - $this->width($verdict, 24, $this->regular) - 28 - 216;
+
             $this->roundedRect($im, 56, $y, self::W - 56, $y + 72, 18, $white);
             $this->text($im, (string) $row['rank'], 84, $y + 48, 28, $muted, $this->bold);
-            $this->avatar($im, 170, $y + 36, 26, $row['name'], $c(0xE9, 0xF7, 0xEF), $green);
-            $this->text($im, $this->fit($row['name'], 30), 216, $y + 46, 26, $ink, $this->bold);
-            $verdict = ! empty($row['finished']) ? "{$row['score']} toʼgʼri · {$row['accuracy']}%" : 'tugatmadi';
+            $this->avatar($im, 170, $y + 36, 26, $name, $c(0xE9, 0xF7, 0xEF), $green);
+            $this->text($im, $this->fitWidth($name, 26, $this->bold, $nameRoom), 216, $y + 46, 26, $ink, $this->bold);
             $this->textRight($im, $verdict, self::W - 84, $y + 46, 24, $muted, $this->regular);
             $y += 84;
         }
@@ -167,6 +192,23 @@ class ResultCard
     protected function fit(string $text, int $max): string
     {
         return mb_strlen($text) > $max ? mb_substr($text, 0, $max - 1).'…' : $text;
+    }
+
+    /** Trims a string, measured in pixels, until it fits the room it has. */
+    protected function fitWidth(string $text, int $size, string $font, int $room): string
+    {
+        if ($this->width($text, $size, $font) <= $room) {
+            return $text;
+        }
+
+        for ($n = mb_strlen($text) - 1; $n > 1; $n--) {
+            $candidate = rtrim(mb_substr($text, 0, $n)).'…';
+            if ($this->width($candidate, $size, $font) <= $room) {
+                return $candidate;
+            }
+        }
+
+        return '…';
     }
 
     protected function avatar(\GdImage $im, int $cx, int $cy, int $r, string $name, int $fill, int $ink): void

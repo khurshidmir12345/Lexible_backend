@@ -25,12 +25,13 @@ class CompetitionController extends Controller
             'path_stage_id' => ['required', 'integer', 'exists:path_stages,id'],
             'types' => ['nullable', 'array', 'min:1'],
             'types.*' => [Rule::in(config('game.test_types'))],
+            'duration_minutes' => ['nullable', 'integer', 'min:1', 'max:180'],
         ]);
 
         $stage = PathStage::findOrFail($data['path_stage_id']);
 
         $competition = $this->competitions->create(
-            $request->user(), $group, $stage, $data['types'] ?? null,
+            $request->user(), $group, $stage, $data['types'] ?? null, $data['duration_minutes'] ?? null,
         );
 
         return ['competition' => $this->competitions->lobby($competition)];
@@ -48,6 +49,7 @@ class CompetitionController extends Controller
             'group_id' => ['nullable', 'integer', 'exists:groups,id'],
             'types' => ['nullable', 'array', 'min:1'],
             'types.*' => [Rule::in(config('game.test_types'))],
+            'duration_minutes' => ['nullable', 'integer', 'min:1', 'max:180'],
         ]);
 
         $group = null;
@@ -58,10 +60,20 @@ class CompetitionController extends Controller
         }
 
         $competition = $this->competitions->create(
-            $request->user(), $group, $stage, $data['types'] ?? null,
+            $request->user(), $group, $stage, $data['types'] ?? null, $data['duration_minutes'] ?? null,
         );
 
         return ['competition' => $this->competitions->lobby($competition)];
+    }
+
+    /** Calls the class in again — whoever has not joined gets the bot message once more. */
+    public function notify(Request $request, Competition $competition): array
+    {
+        $this->authorizeCompetition($request, $competition);
+
+        $sent = $this->competitions->callRoster($competition);
+
+        return ['sent' => $sent, 'competition' => $this->competitions->lobby($competition->fresh())];
     }
 
     /** The lobby, polled while students arrive. */
@@ -96,7 +108,11 @@ class CompetitionController extends Controller
         return ['competition' => $this->competitions->results($competition)];
     }
 
-    /** Recent contests, so the teacher can reopen a board they closed. */
+    /**
+     * Every contest the group has played, newest first — the class history.
+     * A lobby or a running round is listed too, so a teacher who left the
+     * screen can walk back into it.
+     */
     public function index(Request $request, Group $group): array
     {
         $this->authorizeOwner($request, $group);
@@ -106,7 +122,7 @@ class CompetitionController extends Controller
         )];
     }
 
-    /** Every contest this teacher has run, group or open — UT-WEB's list. */
+    /** Every contest this teacher has run, group or open — the full history. */
     public function mine(Request $request): array
     {
         $this->authorizeTeacher($request);
@@ -118,23 +134,53 @@ class CompetitionController extends Controller
 
     protected function rows($query): array
     {
-        return $query
+        $competitions = $query
             ->whereIn('status', ['lobby', 'playing', 'finished'])
-            ->with(['stage', 'group'])
+            ->with(['stage', 'group', 'players.user'])
             ->latest()
-            ->limit(10)
-            ->get()
-            ->map(fn (Competition $competition) => [
-                'id' => $competition->id,
-                'code' => $competition->code,
-                'status' => $competition->status,
-                'open' => $competition->group_id === null,
-                'group' => $competition->group?->title,
-                'stage' => $competition->stage?->position,
-                'stage_title' => $competition->stage?->title,
-                'participants' => $competition->players()->count(),
-                'created_at' => $competition->created_at?->toIso8601String(),
-            ])
+            ->limit(100)
+            ->get();
+
+        // A stale lobby nobody ever started is history, not an open door.
+        foreach ($competitions as $competition) {
+            $this->competitions->settle($competition);
+        }
+
+        return $competitions
+            ->map(function (Competition $competition) {
+                $winner = $competition->players
+                    ->where('status', 'finished')
+                    ->sortBy([['rank', 'asc'], ['score', 'desc'], ['duration_ms', 'asc']])
+                    ->first();
+
+                $expired = $competition->status === 'lobby' && $competition->expires_at?->isPast();
+
+                return [
+                    'id' => $competition->id,
+                    'code' => $competition->code,
+                    'status' => $competition->status,
+                    'live' => $competition->isLive() && ! $expired,
+                    'open' => $competition->group_id === null,
+                    'group' => $competition->group?->title,
+                    'group_id' => $competition->group_id,
+                    'stage_id' => $competition->path_stage_id,
+                    'stage' => $competition->stage?->position,
+                    'stage_title' => $competition->stage?->title,
+                    'questions' => $competition->questions_count,
+                    'duration_minutes' => $competition->duration_minutes,
+                    'participants' => $competition->players->count(),
+                    'finished_players' => $competition->players->where('status', 'finished')->count(),
+                    'winner' => $winner ? [
+                        'name' => trim("{$winner->user?->first_name} {$winner->user?->last_name}") ?: 'Oʼquvchi',
+                        'score' => $winner->score,
+                        'total' => $winner->total,
+                        'duration' => $this->competitions->clock((int) $winner->duration_ms),
+                    ] : null,
+                    'created_at' => $competition->created_at?->toIso8601String(),
+                    'started_at' => $competition->started_at?->toIso8601String(),
+                    'finished_at' => $competition->finished_at?->toIso8601String(),
+                ];
+            })
             ->values()
             ->all();
     }

@@ -92,7 +92,12 @@ class CompetitionController extends Controller
 
         $data = $request->validate(['mode' => ['nullable', 'in:share,chat']]);
 
+        // The picture is the final board; a half-filled one would go round
+        // the class group with a podium that is still moving.
         $board = $this->competitions->results($competition);
+
+        abort_unless($board['status'] === 'finished', Response::HTTP_CONFLICT,
+            'Musobaqa hali tugamadi — natijani yakundan soʼng ulashing.');
         $path = $card->render($board);
         $url = Storage::disk('public')->url($path);
 
@@ -100,7 +105,7 @@ class CompetitionController extends Controller
         $caption = '🏆 <b>'.e($board['group']).'</b>'
             .(! empty($board['stage']) ? ' · '.$board['stage'].'-bosqich' : '')
             .' musobaqasi'
-            .($winner ? "\nGʼolib: <b>".e($winner['name'])."</b> — {$winner['score']}/{$winner['total']}" : '');
+            .($winner ? "\nGʼolib: <b>".e(ResultCard::plainName($winner['name']))."</b> — {$winner['score']}/{$winner['total']} · {$winner['duration']}" : '');
 
         $reply = ['prepared_message_id' => null, 'image_url' => $url, 'sent' => false];
 

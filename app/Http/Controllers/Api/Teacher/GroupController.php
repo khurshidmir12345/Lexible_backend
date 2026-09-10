@@ -374,6 +374,7 @@ class GroupController extends Controller
                 'id' => $group->path->id,
                 'title' => $group->path->title,
                 'subtitle' => $group->path->subtitle,
+                'types' => $group->path->allowedTypes(),
                 'stages' => $group->path->stages->map(fn (PathStage $stage) => [
                     'id' => $stage->id,
                     'position' => $stage->position,

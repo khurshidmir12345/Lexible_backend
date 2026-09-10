@@ -118,22 +118,30 @@ class NotificationService
 
     /* --------------------------------------------------------- competitions */
 
-    /** A lobby opened for the class — everyone on the roster is called in. */
-    public function competitionOpened(User|int $student, string $teacher, string $where, string $code): AppNotification
+    /**
+     * A lobby opened for the class — everyone on the roster is called in.
+     * The button is blue on purpose: every other bot button is the green
+     * "play", and an invitation to a live game should not look like one.
+     */
+    public function competitionOpened(User|int $student, string $teacher, string $where, string $code, ?int $minutes = null): AppNotification
     {
+        $clock = $minutes ? "\n⏱ Vaqt: {$minutes} daqiqa." : '';
+
         $this->message($student,
-            "🏁 <b>Musobaqa boshlanmoqda!</b>\n\n{$teacher} «{$where}» boʼyicha bellashuv ochdi. Sinfdoshlaringiz yigʼilmoqda — qoʼshiling!",
-            BotKeyboard::play('🏆 Qoʼshilish', "comp_{$code}"),
+            "🏁 <b>Musobaqa boshlanmoqda!</b>\n\n{$teacher} «{$where}» boʼyicha bellashuv ochdi. Sinfdoshlaringiz yigʼilmoqda — qoʼshiling!{$clock}",
+            BotKeyboard::play('🏆 Oʼyinga qoʼshilish', "comp_{$code}", 'primary'),
         );
 
         return $this->push($student, 'competition', 'Musobaqaga taklif', "{$teacher} — «{$where}»", '🏁', ['startapp' => "comp_{$code}"]);
     }
 
-    public function competitionStarted(User|int $user, string $group, ?string $code = null): AppNotification
+    public function competitionStarted(User|int $user, string $group, ?string $code = null, ?int $minutes = null): AppNotification
     {
+        $clock = $minutes ? " Vaqt — {$minutes} daqiqa." : '';
+
         $this->message($user,
-            "🏁 <b>Start berildi!</b>\n\n«{$group}» — savollar tayyor, hamma bir vaqtda boshlaydi. Omad!",
-            BotKeyboard::play('🏆 Oʼynash', $code ? "comp_{$code}" : null),
+            "🏁 <b>Start berildi!</b>\n\n«{$group}» — savollar tayyor, hamma bir vaqtda boshlaydi.{$clock} Omad!",
+            BotKeyboard::play('🏆 Oʼynash', $code ? "comp_{$code}" : null, 'primary'),
         );
 
         return $this->push($user, 'competition', 'Musobaqa boshlandi!', "«{$group}» — savollar tayyor", '🏁');

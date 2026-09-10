@@ -14,6 +14,7 @@ class CompetitionPlayer extends Model
         return [
             'joined_at' => 'datetime',
             'finished_at' => 'datetime',
+            'timed_out' => 'boolean',
         ];
     }
 

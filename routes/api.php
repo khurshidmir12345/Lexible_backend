@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\GroupJoinController;
 use App\Http\Controllers\Api\CompetitionController;
 use App\Http\Controllers\Api\Teacher\CompetitionController as TeacherCompetitionController;
 use App\Http\Controllers\Api\Teacher\GroupController as TeacherGroupController;
+use App\Http\Controllers\Api\Teacher\HistoryController;
 use App\Http\Controllers\Api\Teacher\PathController;
 use App\Http\Controllers\Api\Teacher\PlanController;
 use App\Http\Controllers\Api\LearnedWordsController;
@@ -40,6 +41,7 @@ Route::middleware('miniapp')->group(function () {
     Route::get('/pulse', PulseController::class);
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
     Route::get('/streak', [CoinController::class, 'streak']);
+    Route::get('/history', [HistoryController::class, 'mine']);
     Route::get('/road', RoadController::class);
 
     Route::get('/words/search', WordSearchController::class);
@@ -103,8 +105,12 @@ Route::middleware('miniapp')->group(function () {
         Route::post('/stages/{stage}/competitions', [TeacherCompetitionController::class, 'open']);
         Route::get('/competitions/{competition}', [TeacherCompetitionController::class, 'show']);
         Route::post('/competitions/{competition}/start', [TeacherCompetitionController::class, 'start']);
+        Route::post('/competitions/{competition}/notify', [TeacherCompetitionController::class, 'notify']);
         Route::post('/competitions/{competition}/close', [TeacherCompetitionController::class, 'close']);
         Route::get('/competitions/{competition}/results', [TeacherCompetitionController::class, 'results']);
+
+        // The class record: every round, exam and practice a student has played.
+        Route::get('/groups/{group}/students/{student}/history', [HistoryController::class, 'student']);
 
         Route::post('/members/{member}/approve', [TeacherGroupController::class, 'approve']);
         Route::delete('/members/{member}', [TeacherGroupController::class, 'remove']);

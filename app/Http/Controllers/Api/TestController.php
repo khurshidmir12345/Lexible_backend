@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Competition;
 use App\Models\TestAnswer;
 use App\Models\TestSession;
 use App\Models\Word;
 use App\Models\WordProgress;
+use App\Services\Game\CompetitionService;
 use App\Services\Game\ExamService;
 use App\Services\Game\MasteryService;
 use App\Services\Game\RoadMapService;
@@ -124,6 +126,15 @@ class TestController extends Controller
     {
         $this->authorizeSession($request, $session);
         abort_unless($session->status === 'active', Response::HTTP_CONFLICT, 'Bu sessiya tugagan.');
+
+        // A competition paper closes with the round's clock: an answer that
+        // lands after it settles the round instead of being graded.
+        if ($session->competition_id && $competition = Competition::find($session->competition_id)) {
+            app(CompetitionService::class)->settle($competition);
+
+            abort_if($competition->fresh()->status !== 'playing', Response::HTTP_CONFLICT,
+                'Vaqt tugadi — musobaqa yakunlandi.');
+        }
 
         $data = $request->validate([
             'question_id' => ['required', 'string'],
