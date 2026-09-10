@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\GroupMember;
 use App\Services\Game\RoadMapService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class RoadController extends Controller
 {
@@ -49,8 +50,58 @@ class RoadController extends Controller
                 // Group stages are read-only for the player and drawn in gold.
                 'path' => $c->group_id ? (string) $c->group_id : 'personal',
                 'from_group' => $c->isFromGroup(),
-            ])->values(),
+                'placeholder' => false,
+            ])->concat($this->placeholders($request, $nodes))->values(),
         ];
+    }
+
+    /**
+     * A class road is drawn to the teacher's full length. Stages the teacher
+     * has not written yet reach the student as grey, shut cards — the map
+     * keeps its shape with three lessons on it as with thirty, and the
+     * teacher's next lesson takes its place the moment it is filled.
+     *
+     * @return list<array<string, mixed>>
+     */
+    protected function placeholders(Request $request, Collection $nodes): Collection
+    {
+        $have = $nodes->pluck('path_stage_id')->filter()->flip();
+
+        $memberships = GroupMember::with(['group.path.stages'])
+            ->where('user_id', $request->user()->id)
+            ->where('status', 'active')
+            ->get();
+
+        $ghosts = collect();
+
+        foreach ($memberships as $membership) {
+            $group = $membership->group;
+
+            foreach ($group?->path?->stages ?? [] as $stage) {
+                if ($have->has($stage->id)) {
+                    continue;
+                }
+
+                $ghosts->push([
+                    'id' => 'stage-'.$stage->id,
+                    'position' => $stage->position,
+                    'title' => $stage->title,
+                    'type' => $stage->type,
+                    'status' => 'locked',
+                    'lock_reason' => 'unwritten',
+                    'progress' => 0,
+                    'words_count' => 0,
+                    'date' => null,
+                    'season' => 'spring',
+                    'practiced' => false,
+                    'path' => (string) $group->id,
+                    'from_group' => true,
+                    'placeholder' => true,
+                ]);
+            }
+        }
+
+        return $ghosts;
     }
 
     /** @return list<array<string, mixed>> */

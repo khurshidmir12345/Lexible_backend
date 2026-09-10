@@ -157,4 +157,31 @@ class RoadMapTest extends TestCase
             $this->assertSame(($i + 1) % 4 === 0 ? 'exam' : 'normal', $type, 'ordinal '.($i + 1));
         }
     }
+
+    public function test_a_class_road_shows_unwritten_stages_as_grey_placeholders(): void
+    {
+        $student = $this->studentInAClass();
+
+        $road = collect($this->as(800)->getJson('/api/road')->json('nodes'));
+        $groupId = (string) Category::where('user_id', $student->id)->whereNotNull('group_id')->value('group_id');
+        $class = $road->where('path', $groupId)->sortBy('position')->values();
+
+        // The ten pre-drawn, still empty stages plus the two the teacher
+        // wrote: the whole road, in the teacher's numbering, nothing skipped.
+        $this->assertCount(12, $class);
+        $this->assertSame(range(1, 12), $class->pluck('position')->all());
+
+        $written = $class->where('placeholder', false)->values();
+        $ghosts = $class->where('placeholder', true);
+
+        $this->assertSame([11, 12], $written->pluck('position')->all());
+        $this->assertCount(10, $ghosts);
+        $this->assertTrue($ghosts->every(fn ($n) => $n['status'] === 'locked' && $n['lock_reason'] === 'unwritten'));
+
+        // The first written lesson is open, the second waits its turn.
+        $this->assertSame(['in_progress', 'locked'], $written->pluck('status')->all());
+
+        // Personal nodes are untouched by any of this.
+        $this->assertTrue($road->where('path', 'personal')->every(fn ($n) => ! $n['placeholder']));
+    }
 }

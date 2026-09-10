@@ -41,6 +41,17 @@ class Category extends Model
     }
 
     /**
+     * Where this node stands on its own road. Class stages are appended to
+     * the player's map in whatever order the teacher wrote them, so their
+     * `position` says nothing about lesson order — the teacher's numbering
+     * does. Personal nodes are simply in position order.
+     */
+    public function roadOrder(): int
+    {
+        return $this->group_id ? ($this->pathStage?->position ?? $this->position) : $this->position;
+    }
+
+    /**
      * Which exercises may be played here: on a teacher's stage, the ones the
      * teacher switched on for the path; on the player's own, all of them.
      *

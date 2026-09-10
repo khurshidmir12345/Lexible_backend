@@ -17,17 +17,29 @@ class ExamService
 {
     public function __construct(protected RoadMapService $road) {}
 
+    /**
+     * The lessons before this exam on the same road, in road order. A group
+     * exam covers that group's lessons; a personal one, the player's own.
+     */
+    protected function earlier(Category $exam): Collection
+    {
+        $order = $exam->roadOrder();
+
+        return Category::where('user_id', $exam->user_id)
+            ->where('type', 'normal')
+            ->when($exam->group_id, fn ($q) => $q->where('group_id', $exam->group_id))
+            ->when(! $exam->group_id, fn ($q) => $q->whereNull('group_id'))
+            ->with('pathStage')
+            ->get()
+            ->filter(fn (Category $c) => $c->roadOrder() < $order)
+            ->sortBy(fn (Category $c) => $c->roadOrder())
+            ->values();
+    }
+
     /** Every word from the stages leading up to this exam. */
     public function pool(Category $exam): Collection
     {
-        $earlier = Category::where('user_id', $exam->user_id)
-            ->where('position', '<', $exam->position)
-            ->where('type', 'normal')
-            // A group exam covers that group's lessons; a personal one, the
-            // player's own.
-            ->when($exam->group_id, fn ($q) => $q->where('group_id', $exam->group_id))
-            ->when(! $exam->group_id, fn ($q) => $q->whereNull('group_id'))
-            ->pluck('id');
+        $earlier = $this->earlier($exam)->pluck('id');
 
         if ($earlier->isEmpty()) {
             return collect();
@@ -70,13 +82,7 @@ class ExamService
     public function briefing(Category $exam): array
     {
         $pool = $this->pool($exam);
-        $covered = Category::where('user_id', $exam->user_id)
-            ->where('position', '<', $exam->position)
-            ->where('type', 'normal')
-            ->when($exam->group_id, fn ($q) => $q->where('group_id', $exam->group_id))
-            ->when(! $exam->group_id, fn ($q) => $q->whereNull('group_id'))
-            ->orderBy('position')
-            ->get();
+        $covered = $this->earlier($exam);
 
         $questions = min(config('game.exam.questions'), $pool->count());
 

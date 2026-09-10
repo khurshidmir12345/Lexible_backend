@@ -104,10 +104,14 @@ class RoadMapService
         ]);
 
         // The next node on the same road — never a class stage that happens
-        // to hold the next position number.
+        // to hold the next position number, and on a class road the next
+        // lesson by the teacher's numbering, whatever order it was written in.
+        $order = $category->roadOrder();
         $next = $this->sameRoad($category)
-            ->where('position', '>', $category->position)
-            ->orderBy('position')
+            ->with('pathStage')
+            ->get()
+            ->filter(fn (Category $c) => $c->roadOrder() > $order)
+            ->sortBy(fn (Category $c) => $c->roadOrder())
             ->first();
 
         if ($next && $next->status === 'locked') {
