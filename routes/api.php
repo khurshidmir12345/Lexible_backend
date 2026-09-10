@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Teacher\PlanController;
 use App\Http\Controllers\Api\LearnedWordsController;
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PulseController;
 use App\Http\Controllers\Api\RoadController;
 use App\Http\Controllers\Api\TestController;
 use App\Http\Controllers\Api\WordReportController;
@@ -36,6 +37,7 @@ Route::middleware('miniapp')->group(function () {
     Route::get('/dashboard', DashboardController::class);
     Route::get('/coins', [CoinController::class, 'show']);
     Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/pulse', PulseController::class);
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
     Route::get('/streak', [CoinController::class, 'streak']);
     Route::get('/road', RoadController::class);

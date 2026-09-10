@@ -85,4 +85,20 @@ class StudentRefTest extends TestCase
 
         $this->assertSame(2, Group::first()->memberships()->count());
     }
+
+    public function test_the_pulse_changes_when_a_teacher_adds_the_student_to_a_class(): void
+    {
+        $before = $this->as(800, 'Dilnoza')->getJson('/api/pulse')->assertSuccessful()->json();
+        $this->assertSame($before, $this->as(800)->getJson('/api/pulse')->json(), 'nothing happened, nothing changes');
+
+        $this->as(700, 'Anvar')->postJson('/api/me/role', ['role' => 'teacher']);
+        $groupId = $this->as(700)->postJson('/api/teacher/groups', ['title' => '5-A', 'badge' => '5A'])->json('group.id');
+        $studentId = User::where('telegram_id', 800)->value('id');
+        $this->as(700)->postJson("/api/teacher/groups/{$groupId}/members", ['user_id' => $studentId])->assertSuccessful();
+
+        $after = $this->as(800)->getJson('/api/pulse')->json();
+
+        $this->assertNotSame($before['road'], $after['road']);
+        $this->assertGreaterThan($before['unread'], $after['unread']);
+    }
 }
