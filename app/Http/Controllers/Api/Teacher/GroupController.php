@@ -191,20 +191,28 @@ class GroupController extends Controller
 
         $taken = $group->memberships()->whereIn('status', ['pending', 'active'])->pluck('user_id');
 
+        // A student ID off a profile screen comes first — typed with or
+        // without its hyphen — then the looser name and username matches.
+        $ref = User::normaliseRef($query);
+
         $rows = User::query()
             ->where('id', '!=', $request->user()->id)
-            ->where(function ($builder) use ($query) {
-                $builder->where('telegram_id', 'like', "%{$query}%")
+            ->where(function ($builder) use ($query, $ref) {
+                $builder->where('student_ref', $ref)
+                    ->orWhere('student_ref', 'like', "{$ref}%")
+                    ->orWhere('telegram_id', 'like', "%{$query}%")
                     ->orWhere('username', 'like', "%{$query}%")
                     ->orWhere('first_name', 'like', "%{$query}%")
                     ->orWhere('last_name', 'like', "%{$query}%");
             })
+            ->orderByRaw('CASE WHEN student_ref = ? THEN 0 ELSE 1 END', [$ref])
             ->limit(8)
             ->get()
             ->map(fn (User $user) => [
                 'id' => $user->id,
                 'name' => $user->full_name,
                 'initial' => $user->initial,
+                'ref' => $user->studentRef(),
                 'telegram_id' => $user->telegram_id,
                 'level' => $user->cefr_level,
                 'already_in' => $taken->contains($user->id),

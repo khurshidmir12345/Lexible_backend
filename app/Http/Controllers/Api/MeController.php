@@ -143,6 +143,7 @@ class MeController extends Controller
             // instead of the role choice being a one-way door.
             'has_teaching' => $user->hasTeaching(),
             'teacher_ref' => $user->teacher_ref,
+            'student_ref' => $user->studentRef(),
             'native_lang' => $user->native_lang,
             'study_days' => $user->study_days ?? [],
             'reminder_at' => $user->reminder_at ? substr((string) $user->reminder_at, 0, 5) : null,

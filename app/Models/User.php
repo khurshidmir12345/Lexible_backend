@@ -82,6 +82,34 @@ class User extends Model
         return $ref;
     }
 
+    /**
+     * The ID a student shows on their profile so a teacher can find and add
+     * them by it — digits only, so it can be read out and typed without
+     * confusion. Minted on first use, like the teacher's.
+     */
+    public function studentRef(): string
+    {
+        if ($this->student_ref) {
+            return $this->student_ref;
+        }
+
+        do {
+            $ref = 'ST-'.random_int(100000, 999999);
+        } while (static::where('student_ref', $ref)->exists());
+
+        $this->forceFill(['student_ref' => $ref])->save();
+
+        return $ref;
+    }
+
+    /** "st 123456", "ST123456" and "ST-123456" all name the same student. */
+    public static function normaliseRef(string $value): string
+    {
+        $value = strtoupper(preg_replace('/[\s\-]+/', '', trim($value)));
+
+        return (string) preg_replace('/^([A-Z]+)([A-Z0-9]+)$/', '$1-$2', $value);
+    }
+
     public function categories(): HasMany
     {
         return $this->hasMany(Category::class)->orderBy('position');

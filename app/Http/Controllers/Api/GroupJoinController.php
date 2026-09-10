@@ -45,8 +45,10 @@ class GroupJoinController extends Controller
             return $this->request($group, $request->user());
         }
 
-        // Not a group code — try it as a teacher ID.
-        $teacher = User::where('teacher_ref', $code)->where('role', 'teacher')->first();
+        // Not a group code — try it as a teacher ID. The role is not checked:
+        // a teacher who is studying on the student side for a while still has
+        // their classes, and their ID must keep working for them.
+        $teacher = User::where('teacher_ref', $code)->first();
 
         abort_unless($teacher, Response::HTTP_NOT_FOUND,
             'Bunday kod topilmadi. Guruh kodi (LX-7K3M9Q) yoki ustoz ID (TCHR-1234) ni tekshiring.');
@@ -145,7 +147,15 @@ class GroupJoinController extends Controller
     {
         $code = strtoupper(trim($code));
         $code = preg_replace('/\s+/', '-', $code);
+        $code = trim((string) $code, '-');
 
-        return trim((string) $code, '-');
+        // "TCHR2381" / "LX7K3M9Q" typed without the hyphen: put it back
+        // between the letter prefix and the rest. Old badge codes such as
+        // 5A-KITOB already carry theirs and are left alone.
+        if (! str_contains($code, '-')) {
+            $code = (string) preg_replace('/^([A-Z]+)(\d[A-Z0-9]*|[A-Z0-9]{6})$/', '$1-$2', $code);
+        }
+
+        return $code;
     }
 }
