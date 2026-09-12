@@ -83,12 +83,17 @@ class UpdateHandler
     protected function sendWelcome(User $user, ?string $payload = null): void
     {
         $name = e($user->first_name ?: 'do\'stim');
+        $text = Setting::get('bot.welcome') ?? $this->defaultWelcome($name);
+        $extra = ['reply_markup' => $this->playKeyboard($payload)];
 
-        $this->telegram->sendMessage(
-            $user->chat_id,
-            Setting::get('bot.welcome') ?? $this->defaultWelcome($name),
-            ['reply_markup' => $this->playKeyboard($payload)],
-        );
+        // First contact shows the brand: the Bayoz logo on top, the greeting
+        // as its caption. If Telegram cannot fetch the image (local dev, a
+        // caption over 1024 chars) the plain text greeting still goes out.
+        $sent = $this->telegram->sendPhoto($user->chat_id, $this->logoUrl(), $text, $extra);
+
+        if (! ($sent['ok'] ?? false)) {
+            $this->telegram->sendMessage($user->chat_id, $text, $extra);
+        }
     }
 
     protected function sendPlay(User $user): void
@@ -136,9 +141,9 @@ class UpdateHandler
     protected function sendHelp(User $user): void
     {
         $this->telegram->sendMessage($user->chat_id, implode("\n", [
-            '❓ <b>Lexible haqida</b>',
+            '❓ <b>Bayoz haqida</b>',
             '',
-            'Lexible — ingliz tili so\'zlarini o\'yin orqali yodlash ilovasi.',
+            'Bayoz — ingliz tili so\'zlarini o\'yin orqali yodlash ilovasi.',
             '',
             '/play — o\'yinni ochish',
             '/stats — statistikangiz',
@@ -178,12 +183,18 @@ class UpdateHandler
         return MiniAppLink::to("ref_{$user->telegram_id}");
     }
 
+    /** Public URL of the brand logo Telegram downloads for the welcome photo. */
+    public function logoUrl(): string
+    {
+        return rtrim((string) config('app.url'), '/').'/brand/bayoz-logo.png';
+    }
+
     protected function defaultWelcome(string $name): string
     {
         return implode("\n", [
             "Salom, <b>{$name}</b>! 👋",
             '',
-            "<b>Lexible</b> — ingliz tili so'zlarini o'yin orqali yodlaysiz.",
+            "<b>Bayoz</b> — ingliz tili so'zlarini o'yin orqali yodlaysiz.",
             'Har kuni 5 daqiqa — va lug\'atingiz o\'sib boradi. 🚀',
             '',
             "Boshlash uchun pastdagi tugmani bosing 👇",

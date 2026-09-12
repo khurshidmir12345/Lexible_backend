@@ -129,6 +129,33 @@ class TelegramClient
         ]));
     }
 
+    /** The name shown in the chat header and contact list. */
+    public function setMyName(string $name, ?string $languageCode = null): array
+    {
+        return $this->call('setMyName', array_filter([
+            'name' => $name,
+            'language_code' => $languageCode,
+        ]));
+    }
+
+    /** Text shown on the empty chat (“What can this bot do?”) before /start. */
+    public function setMyDescription(string $description, ?string $languageCode = null): array
+    {
+        return $this->call('setMyDescription', array_filter([
+            'description' => $description,
+            'language_code' => $languageCode,
+        ]));
+    }
+
+    /** Short text on the bot's profile page and in share links. */
+    public function setMyShortDescription(string $description, ?string $languageCode = null): array
+    {
+        return $this->call('setMyShortDescription', array_filter([
+            'short_description' => $description,
+            'language_code' => $languageCode,
+        ]));
+    }
+
     public function setChatMenuButton(string $text, string $webAppUrl): array
     {
         return $this->call('setChatMenuButton', [

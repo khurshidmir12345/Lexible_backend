@@ -53,10 +53,25 @@ class TelegramSetup extends Command
         ]);
         $this->line(($commands['ok'] ?? false) ? '✅ Buyruqlar oʼrnatildi' : '❌ Buyruqlar: '.($commands['description'] ?? '—'));
 
+        $name = $telegram->setMyName(config('app.name'));
+        $this->line(($name['ok'] ?? false) ? '✅ Bot nomi: '.config('app.name') : '❌ Bot nomi: '.($name['description'] ?? '—'));
+
+        $description = $telegram->setMyDescription(implode("\n", [
+            "🦊 Bayoz — ingliz tili so'zlarini o'yin orqali yodlang.",
+            '',
+            "Har kuni 5 daqiqa: yangi so'zlar, xazina xaritasi, do'stlar bilan duel.",
+            "Boshlash uchun «Start» ni bosing 👇",
+        ]));
+        $this->line(($description['ok'] ?? false) ? '✅ Tavsif oʼrnatildi' : '❌ Tavsif: '.($description['description'] ?? '—'));
+
+        $short = $telegram->setMyShortDescription("Ingliz tili so'zlarini o'yin orqali yodlash ilovasi 🦊");
+        $this->line(($short['ok'] ?? false) ? '✅ Qisqa tavsif oʼrnatildi' : '❌ Qisqa tavsif: '.($short['description'] ?? '—'));
+
         $menu = $telegram->setChatMenuButton("🎮 O'ynash", config('telegram.mini_app.url'));
         $this->line(($menu['ok'] ?? false) ? '✅ Menyu tugmasi: '.config('telegram.mini_app.url') : '❌ Menyu: '.($menu['description'] ?? '—'));
 
         $this->newLine();
+        $this->comment('Qoʼlda qilinadigan qadam: @BotFather → /setuserpic → bot profil rasmi (backend/public/brand/bayoz-logo.png)');
         $this->comment('Qoʼlda qilinadigan qadam: @BotFather → /mybots → Bot Settings → Mini Apps → Enable Mini App (Main Mini App), URL: '.config('telegram.mini_app.url'));
         $this->comment('Shundan keyin toʼgʼridan-toʼgʼri havola ishlaydi: '.\App\Support\MiniAppLink::to('test').' (startapp qiymati ilova ichida start_param sifatida keladi)');
 

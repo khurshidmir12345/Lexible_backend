@@ -93,7 +93,7 @@ class ResultCard
             ));
         }
 
-        $this->text($im, 'LEXIBLE', 56, 96, 26, $c(0xFF, 0xFF, 0xFF, 50), $this->bold, 6);
+        $this->text($im, 'BAYOZ', 56, 96, 26, $c(0xFF, 0xFF, 0xFF, 50), $this->bold, 6);
         $this->text($im, $this->status($board), 56, 176, 52, $white, $this->bold);
 
         $sub = [];

@@ -27,7 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->authGuard('admin')          // players live in `users` and never sign in here
-            ->brandName('Lexible')
+            ->brandName('Bayoz')
             ->colors([
                 'primary' => Color::hex('#37c26a'),   // the app's green
                 'info' => Color::hex('#2d9cdb'),

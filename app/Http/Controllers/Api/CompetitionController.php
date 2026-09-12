@@ -114,7 +114,7 @@ class CompetitionController extends Controller
         }
 
         $keyboard = ['inline_keyboard' => [[
-            ['text' => '🎮 Lexible’da oʼynash', 'url' => MiniAppLink::to('comp_'.$competition->code)],
+            ['text' => '🎮 Bayoz’da oʼynash', 'url' => MiniAppLink::to('comp_'.$competition->code)],
         ]]];
 
         if (($data['mode'] ?? 'share') === 'chat') {
