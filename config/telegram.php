@@ -44,6 +44,8 @@ return [
     'mini_app' => [
         'url' => env('TELEGRAM_MINI_APP_URL', env('APP_URL').'/app'),
         'short_name' => env('TELEGRAM_MINI_APP_SHORT_NAME', 'game'),
+        // null = ask getMe (has_main_web_app) and cache it; true/false forces the link form.
+        'main' => env('TELEGRAM_MAIN_MINI_APP'),
         'init_data_ttl' => (int) env('TELEGRAM_INIT_DATA_TTL', 86400),
     ],
 

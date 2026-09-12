@@ -26,6 +26,14 @@ class TelegramSetup extends Command
         $bot = $me['result'];
         $this->info("Bot: @{$bot['username']} ({$bot['first_name']})");
 
+        \App\Support\MiniAppLink::refresh();
+
+        if ($bot['has_main_web_app'] ?? false) {
+            $this->info('✅ Main Mini App yoqilgan — havolalar t.me/'.$bot['username'].'?startapp=… koʼrinishida.');
+        } else {
+            $this->warn('⚠️  Main Mini App YOQILMAGAN — havolalar vaqtincha t.me/'.$bot['username'].'?start=… koʼrinishida (chat → Start → tugma). BotFather: /mybots → Bot Settings → Mini Apps → Enable Mini App.');
+        }
+
         if ($this->option('info')) {
             return $this->showInfo($telegram);
         }

@@ -22,6 +22,7 @@ class MiniAppController extends Controller
             'config' => [
                 'apiUrl' => url('/api'),
                 'botUsername' => ltrim((string) config('telegram.username'), '@'),
+                'mainWebApp' => \App\Support\MiniAppLink::hasMainApp(),
                 'miniAppShortName' => config('telegram.mini_app.short_name'),
                 'languages' => config('app.supported_locales'),
                 'testTypes' => config('game.test_types'),

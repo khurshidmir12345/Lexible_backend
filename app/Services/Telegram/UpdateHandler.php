@@ -83,8 +83,17 @@ class UpdateHandler
     protected function sendWelcome(User $user, ?string $payload = null): void
     {
         $name = e($user->first_name ?: 'do\'stim');
-        $text = Setting::get('bot.welcome') ?? $this->defaultWelcome($name);
         $extra = ['reply_markup' => $this->playKeyboard($payload)];
+
+        // A player who already knows the bot and arrived through a duel or
+        // class-game link wants the game, not the full greeting again.
+        if (! $user->wasRecentlyCreated && $invite = $this->inviteText($payload)) {
+            $this->telegram->sendMessage($user->chat_id, $invite, $extra);
+
+            return;
+        }
+
+        $text = Setting::get('bot.welcome') ?? $this->defaultWelcome($name);
 
         // First contact shows the brand: the Bayoz logo on top, the greeting
         // as its caption. If Telegram cannot fetch the image (local dev, a
@@ -176,6 +185,15 @@ class UpdateHandler
         }
 
         return BotKeyboard::play();
+    }
+
+    protected function inviteText(?string $payload): ?string
+    {
+        return match (true) {
+            $payload && str_starts_with($payload, 'duel_') => "⚔️ Sizni duelga chaqirishdi! Qoʼshilish uchun tugmani bosing 👇",
+            $payload && str_starts_with($payload, 'comp_') => "🏆 Sizni bellashuvga taklif qilishdi! Qoʼshilish uchun tugmani bosing 👇",
+            default => null,
+        };
     }
 
     public function referralLink(User $user): string
