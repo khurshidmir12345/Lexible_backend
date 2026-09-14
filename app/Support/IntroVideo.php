@@ -59,7 +59,18 @@ final class IntroVideo
             return ['ok' => false, 'description' => 'intro video file missing'];
         }
 
-        $sent = $telegram->sendVideo($chatId, self::fileId() ?? self::path(), self::caption(), $extra);
+        $fileId = self::fileId();
+
+        // On the upload itself Telegram must be told the frame size and
+        // length: without them clients draw the bubble as a small square
+        // placeholder instead of a full-width player. A file_id resend
+        // keeps the dimensions Telegram stored at upload time.
+        $sent = $telegram->sendVideo(
+            $chatId,
+            $fileId ?? self::path(),
+            self::caption(),
+            $fileId ? $extra : array_merge(self::dimensions(), $extra),
+        );
 
         $fileId = $sent['result']['video']['file_id'] ?? null;
 
@@ -68,6 +79,105 @@ final class IntroVideo
         }
 
         return $sent;
+    }
+
+    /**
+     * width / height / duration read straight from the MP4 atoms (moov →
+     * mvhd for the clock, trak → tkhd for the frame), so a replaced file is
+     * described correctly without ffprobe on the server.
+     *
+     * @return array{width?: int, height?: int, duration?: int}
+     */
+    public static function dimensions(): array
+    {
+        $out = [];
+        $fh = @fopen(self::path(), 'rb');
+
+        if (! $fh) {
+            return $out;
+        }
+
+        try {
+            $moov = self::findAtom($fh, 'moov', 0, filesize(self::path()));
+
+            if (! $moov) {
+                return $out;
+            }
+
+            [$moovStart, $moovEnd] = $moov;
+
+            if ($mvhd = self::findAtom($fh, 'mvhd', $moovStart, $moovEnd)) {
+                fseek($fh, $mvhd[0]);
+                $version = ord(fread($fh, 1));
+                fseek($fh, $mvhd[0] + ($version === 1 ? 20 : 12));
+                $u = unpack($version === 1 ? 'Nscale/Jlength' : 'Nscale/Nlength', fread($fh, $version === 1 ? 12 : 8));
+
+                if ($u['scale'] > 0) {
+                    $out['duration'] = (int) round($u['length'] / $u['scale']);
+                }
+            }
+
+            $cursor = $moovStart;
+
+            while ($trak = self::findAtom($fh, 'trak', $cursor, $moovEnd)) {
+                if ($tkhd = self::findAtom($fh, 'tkhd', $trak[0], $trak[1])) {
+                    fseek($fh, $tkhd[1] - 8);
+                    $u = unpack('Nw/Nh', fread($fh, 8));
+                    $w = $u['w'] >> 16;
+                    $h = $u['h'] >> 16;
+
+                    if ($w > 0 && $h > 0) {
+                        $out['width'] = $w;
+                        $out['height'] = $h;
+                        break;
+                    }
+                }
+
+                $cursor = $trak[1];
+            }
+        } finally {
+            fclose($fh);
+        }
+
+        return $out;
+    }
+
+    /** Scans [$from, $to) for a top-level atom; returns [bodyStart, atomEnd] or null. */
+    private static function findAtom($fh, string $type, int $from, int $to): ?array
+    {
+        $pos = $from;
+
+        while ($pos + 8 <= $to) {
+            fseek($fh, $pos);
+            $head = fread($fh, 8);
+
+            if (strlen($head) < 8) {
+                return null;
+            }
+
+            $u = unpack('Nsize/a4type', $head);
+            $size = $u['size'];
+            $body = $pos + 8;
+
+            if ($size === 1) {
+                $size = unpack('J', fread($fh, 8))[1];
+                $body = $pos + 16;
+            } elseif ($size === 0) {
+                $size = $to - $pos;
+            }
+
+            if ($size < 8) {
+                return null;
+            }
+
+            if ($u['type'] === $type) {
+                return [$body, $pos + $size];
+            }
+
+            $pos += $size;
+        }
+
+        return null;
     }
 
     private static function botId(): string
