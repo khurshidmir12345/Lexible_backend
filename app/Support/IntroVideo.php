@@ -6,8 +6,9 @@ use App\Models\Setting;
 use App\Services\Telegram\TelegramClient;
 
 /**
- * The "how to use the bot" video, sent when a player taps the "Qoʼllanma
- * video" button under the welcome. The file lives in public/brand; it is uploaded to Telegram once
+ * The "how to use the bot" video: the /start welcome itself (video on top,
+ * greeting as caption, play button under it), and again on the "Qoʼllanma
+ * video" button of /help. The file lives in public/brand; it is uploaded to Telegram once
  * (23 MB — over the URL limit, so multipart) and the returned file_id is kept
  * in settings, so every later send is a cheap file_id reference. file_ids are
  * bound to the bot that uploaded them, so the cache is keyed by bot id and a
@@ -61,7 +62,7 @@ final class IntroVideo
      * Sends the video to a chat: by file_id when known, otherwise by uploading
      * the file (and remembering the file_id Telegram hands back).
      */
-    public static function send(TelegramClient $telegram, int|string $chatId, array $extra = []): array
+    public static function send(TelegramClient $telegram, int|string $chatId, array $extra = [], ?string $caption = null): array
     {
         if (! self::exists()) {
             return ['ok' => false, 'description' => 'intro video file missing'];
@@ -76,7 +77,7 @@ final class IntroVideo
         $sent = $telegram->sendVideo(
             $chatId,
             $fileId ?? self::path(),
-            self::caption(),
+            $caption ?? self::caption(),
             $fileId ? $extra : array_merge(self::dimensions(), $extra),
         );
 

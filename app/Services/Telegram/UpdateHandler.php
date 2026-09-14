@@ -102,10 +102,13 @@ class UpdateHandler
 
         $text = Setting::get('bot.welcome') ?? $this->defaultWelcome($name);
 
-        // First contact shows the brand: the Bayoz logo on top, the greeting
-        // as its caption. If Telegram cannot fetch the image (local dev, a
+        // One message: the tutorial video on top, the greeting as its
+        // caption, the play button under it. Without the video file the
+        // logo stands in; if Telegram refuses the media (local dev, a
         // caption over 1024 chars) the plain text greeting still goes out.
-        $sent = $this->telegram->sendPhoto($user->chat_id, $this->logoUrl(), $text, $extra);
+        $sent = IntroVideo::exists()
+            ? IntroVideo::send($this->telegram, $user->chat_id, $extra, $text)
+            : $this->telegram->sendPhoto($user->chat_id, $this->logoUrl(), $text, $extra);
 
         if (! ($sent['ok'] ?? false)) {
             $this->telegram->sendMessage($user->chat_id, $text, $extra);
@@ -164,7 +167,7 @@ class UpdateHandler
             '/play — o\'yinni ochish',
             '/stats — statistikangiz',
             '/invite — do\'st taklif qilish',
-        ]), ['reply_markup' => $this->playKeyboard()]);
+        ]), ['reply_markup' => $this->withIntroButton($this->playKeyboard())]);
     }
 
     protected function sendFallback(User $user): void
@@ -191,10 +194,10 @@ class UpdateHandler
             return BotKeyboard::play($label, $startParam);
         }
 
-        return $this->withIntroButton(BotKeyboard::play());
+        return BotKeyboard::play();
     }
 
-    /** Adds the "Qoʼllanma video" row under the play button when the video exists. */
+    /** Adds the "Qoʼllanma video" row under the play button when the video exists (used by /help). */
     protected function withIntroButton(array $keyboard): array
     {
         if (IntroVideo::exists()) {
@@ -227,12 +230,13 @@ class UpdateHandler
     protected function defaultWelcome(string $name): string
     {
         return implode("\n", [
-            "Salom, <b>{$name}</b>! 👋",
+            '🦊 Bayoz’ga xush kelibsiz!',
             '',
-            "<b>Bayoz</b> — ingliz tili so'zlarini o'yin orqali yodlaysiz.",
-            'Har kuni 5 daqiqa — va lug\'atingiz o\'sib boradi. 🚀',
+            'Inglizcha so‘zlarni o‘yin orqali yodlang, ball to‘plang va do‘stlaringiz bilan bellashing. 🎯',
             '',
-            "Boshlash uchun pastdagi tugmani bosing 👇",
+            '🎥 Bayoz’dan qanday foydalanishni bilish uchun yuqoridagi qisqa video qo‘llanmani ko‘rib chiqing.',
+            '',
+            '🎮 Tayyor bo‘lsangiz, O‘ynash tugmasini bosing!',
         ]);
     }
 }
