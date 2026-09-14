@@ -9,7 +9,9 @@ class TelegramSetup extends Command
 {
     protected $signature = 'telegram:setup
         {--webhook-only : Only register the webhook}
-        {--info         : Only show the current state}';
+        {--info         : Only show the current state}
+        {--intro-to=    : Telegram id of the chat that receives the intro-video upload (default: the first registered user)}
+        {--reupload     : Upload the intro video again even if a file_id is cached}';
 
     protected $description = 'Register the webhook, bot commands and Mini App menu button';
 
@@ -78,12 +80,54 @@ class TelegramSetup extends Command
         $menu = $telegram->setChatMenuButton("🎮 O'ynash", config('telegram.mini_app.url'));
         $this->line(($menu['ok'] ?? false) ? '✅ Menyu tugmasi: '.config('telegram.mini_app.url') : '❌ Menyu: '.($menu['description'] ?? '—'));
 
+        $this->uploadIntroVideo($telegram);
+
         $this->newLine();
         $this->comment('Qoʼlda qilinadigan qadam: @BotFather → /setuserpic → bot profil rasmi (backend/public/brand/bayoz-logo.png)');
         $this->comment('Qoʼlda qilinadigan qadam: @BotFather → /mybots → Bot Settings → Mini Apps → Enable Mini App (Main Mini App), URL: '.config('telegram.mini_app.url'));
         $this->comment('Shundan keyin toʼgʼridan-toʼgʼri havola ishlaydi: '.\App\Support\MiniAppLink::to('test').' (startapp qiymati ilova ichida start_param sifatida keladi)');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * The intro video is 23 MB — too big for a URL send — so it is uploaded
+     * once here, to a real chat, and the file_id is cached for every /start.
+     * Doing it at setup keeps the webhook fast for the first new player.
+     */
+    protected function uploadIntroVideo(TelegramClient $telegram): void
+    {
+        if (! \App\Support\IntroVideo::exists()) {
+            $this->warn('⚠️  Intro video topilmadi: '.\App\Support\IntroVideo::path());
+
+            return;
+        }
+
+        if ($this->option('reupload')) {
+            \App\Support\IntroVideo::forget();
+        }
+
+        if (\App\Support\IntroVideo::fileId()) {
+            $this->line('✅ Intro video allaqachon yuklangan (file_id keshda)');
+
+            return;
+        }
+
+        $chatId = $this->option('intro-to')
+            ?: \App\Models\User::whereNotNull('chat_id')->orderBy('id')->value('chat_id');
+
+        if (! $chatId) {
+            $this->warn('⚠️  Intro video yuklanmadi: chat topilmadi (--intro-to=<telegram id> bering)');
+
+            return;
+        }
+
+        $this->line("⏫ Intro video yuklanmoqda (chat {$chatId})…");
+        $sent = \App\Support\IntroVideo::send($telegram, $chatId, ['reply_markup' => \App\Support\BotKeyboard::play()]);
+
+        $this->line(($sent['ok'] ?? false)
+            ? '✅ Intro video yuklandi, file_id saqlandi'
+            : '❌ Intro video: '.($sent['description'] ?? '—'));
     }
 
     protected function showInfo(TelegramClient $telegram): int

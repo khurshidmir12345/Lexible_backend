@@ -5,6 +5,7 @@ namespace App\Services\Telegram;
 use App\Models\Setting;
 use App\Models\User;
 use App\Support\BotKeyboard;
+use App\Support\IntroVideo;
 use App\Support\MiniAppLink;
 use Illuminate\Support\Str;
 
@@ -102,6 +103,12 @@ class UpdateHandler
 
         if (! ($sent['ok'] ?? false)) {
             $this->telegram->sendMessage($user->chat_id, $text, $extra);
+        }
+
+        // Someone writing to the bot for the first time also gets the short
+        // "how to use it" video, with the same play button underneath.
+        if ($user->wasRecentlyCreated && IntroVideo::exists()) {
+            IntroVideo::send($this->telegram, $user->chat_id, $extra);
         }
     }
 

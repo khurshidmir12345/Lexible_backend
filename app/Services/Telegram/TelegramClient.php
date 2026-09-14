@@ -33,7 +33,32 @@ class TelegramClient
      */
     public function call(string $method, array $params = []): array
     {
-        $response = $this->http()->post("/{$method}", $params);
+        return $this->parse($method, $this->http()->post("/{$method}", $params));
+    }
+
+    /**
+     * Same as call(), but streams a local file as multipart — the way a video
+     * over the 20 MB URL limit gets to Telegram. Nested params (reply_markup)
+     * must travel as JSON strings inside a multipart body.
+     */
+    public function upload(string $method, string $field, string $path, array $params = []): array
+    {
+        foreach ($params as $key => $value) {
+            if (is_array($value)) {
+                $params[$key] = json_encode($value);
+            }
+        }
+
+        $response = $this->http()
+            ->timeout(180)
+            ->attach($field, fopen($path, 'r'), basename($path))
+            ->post("/{$method}", $params);
+
+        return $this->parse($method, $response);
+    }
+
+    protected function parse(string $method, \Illuminate\Http\Client\Response $response): array
+    {
         $body = $response->json() ?? [];
 
         if (! ($body['ok'] ?? false)) {
@@ -55,6 +80,23 @@ class TelegramClient
             'parse_mode' => 'HTML',
             'link_preview_options' => ['is_disabled' => true],
         ], $extra));
+    }
+
+    /** `$video` is a file_id, an https URL (≤ 20 MB) or a local path (≤ 50 MB, uploaded). */
+    public function sendVideo(int|string $chatId, string $video, string $caption = '', array $extra = []): array
+    {
+        $params = array_merge([
+            'chat_id' => $chatId,
+            'caption' => $caption,
+            'parse_mode' => 'HTML',
+            'supports_streaming' => true,
+        ], $extra);
+
+        if (is_file($video)) {
+            return $this->upload('sendVideo', 'video', $video, $params);
+        }
+
+        return $this->call('sendVideo', ['video' => $video] + $params);
     }
 
     public function sendPhoto(int|string $chatId, string $photo, string $caption = '', array $extra = []): array
