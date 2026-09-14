@@ -6,8 +6,8 @@ use App\Models\Setting;
 use App\Services\Telegram\TelegramClient;
 
 /**
- * The "how to use the bot" video every first-time player receives after the
- * welcome. The file lives in public/brand; it is uploaded to Telegram once
+ * The "how to use the bot" video, sent when a player taps the "Qoʼllanma
+ * video" button under the welcome. The file lives in public/brand; it is uploaded to Telegram once
  * (23 MB — over the URL limit, so multipart) and the returned file_id is kept
  * in settings, so every later send is a cheap file_id reference. file_ids are
  * bound to the bot that uploaded them, so the cache is keyed by bot id and a
@@ -16,6 +16,11 @@ use App\Services\Telegram\TelegramClient;
 final class IntroVideo
 {
     public const SETTING = 'bot.intro_video';
+
+    /** callback_data of the "🎬 Qoʼllanma video" button under the bot's messages. */
+    public const CALLBACK = 'intro_video';
+
+    public const BUTTON = "🎬 Qoʼllanma video";
 
     public static function path(): string
     {
@@ -27,13 +32,16 @@ final class IntroVideo
         return is_file(self::path());
     }
 
+    /** No caption by default — the video speaks for itself; `bot.intro_caption` can add one. */
     public static function caption(): string
     {
-        return Setting::get('bot.intro_caption') ?? implode("\n", [
-            "🎬 <b>Bayoz'dan qanday foydalanish</b>",
-            '',
-            "Qisqa video: o'yinni ochish, so'zlarni yodlash, do'stlar bilan duel.",
-        ]);
+        return (string) (Setting::get('bot.intro_caption') ?? '');
+    }
+
+    /** The inline button that asks the bot for the video. */
+    public static function button(): array
+    {
+        return ['text' => self::BUTTON, 'callback_data' => self::CALLBACK];
     }
 
     /** Cached Telegram file_id for the current bot, if the video was uploaded already. */

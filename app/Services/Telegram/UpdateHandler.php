@@ -62,6 +62,12 @@ class UpdateHandler
     protected function onCallbackQuery(array $query): void
     {
         $this->telegram->answerCallbackQuery($query['id']);
+
+        $chatId = $query['message']['chat']['id'] ?? $query['from']['id'] ?? null;
+
+        if ($chatId && ($query['data'] ?? null) === IntroVideo::CALLBACK && IntroVideo::exists()) {
+            IntroVideo::send($this->telegram, $chatId, ['reply_markup' => BotKeyboard::play()]);
+        }
     }
 
     /** Fires when a player blocks or unblocks the bot — keeps broadcasts honest. */
@@ -103,12 +109,6 @@ class UpdateHandler
 
         if (! ($sent['ok'] ?? false)) {
             $this->telegram->sendMessage($user->chat_id, $text, $extra);
-        }
-
-        // Someone writing to the bot for the first time also gets the short
-        // "how to use it" video, with the same play button underneath.
-        if ($user->wasRecentlyCreated && IntroVideo::exists()) {
-            IntroVideo::send($this->telegram, $user->chat_id, $extra);
         }
     }
 
@@ -191,7 +191,17 @@ class UpdateHandler
             return BotKeyboard::play($label, $startParam);
         }
 
-        return BotKeyboard::play();
+        return $this->withIntroButton(BotKeyboard::play());
+    }
+
+    /** Adds the "Qoʼllanma video" row under the play button when the video exists. */
+    protected function withIntroButton(array $keyboard): array
+    {
+        if (IntroVideo::exists()) {
+            $keyboard['inline_keyboard'][] = [IntroVideo::button()];
+        }
+
+        return $keyboard;
     }
 
     protected function inviteText(?string $payload): ?string
